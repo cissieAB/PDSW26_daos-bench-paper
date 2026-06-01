@@ -3,6 +3,7 @@
 
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
+\usepackage[hidelinks]{hyperref}
 \usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{textcomp}
@@ -48,10 +49,14 @@ or Math in Paper Title or Abstract.
 \end{abstract}
 
 \begin{IEEEkeywords}
-DAOS, distributed storage system, benchmarking, performance analysis
+DAOS, distributed storage system, performance benchmarking
 \end{IEEEkeywords}
 
-\section{Introduction}
+
+\input{secs/introdcution.tex}
+\input{secs/background.tex}
+\input{secs/methods.tex}
+\input{secs/results.tex}
 
 
 \subsection{Figures and Tables}
@@ -86,8 +91,7 @@ copy& More table copy$^{\mathrm{a}}$& &  \\
 % \end{figure}
 
 
-\input{secs/lit_review.tex}
-
+\input{secs/future.tex}
 
 \section*{Acknowledgment}
 We thank the anonymous reviewers for their valuable feedback.
@@ -97,6 +101,7 @@ The William \& Mary effort was supported by NSF OAC-2348350.
 
 
 
+\newpage
 \bibliographystyle{IEEEtran}
 \bibliography{references}
 
