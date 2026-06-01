@@ -1,0 +1,12 @@
+# LaTeX compilation files
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.gz
+.bbl
+main.pdf
