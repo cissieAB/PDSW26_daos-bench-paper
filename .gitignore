@@ -12,3 +12,6 @@
 *.synctex.gz
 
 main.pdf
+
+# vscode settings
+.vscode/
