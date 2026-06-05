@@ -1,8 +1,13 @@
 \section{Background and Related Work}
 
 \subsection{DAOS Architecture}
-Lofstead et al. presented the initial DAOS design as the next-generation HPC I/O stack by replacing POSIX file and directory abstractions with a distributed, object-based model featuring containers, versioned objects, and epoch-based consistency mechanisms \cite{daos-exascale-storage2016sc}.
+Lofstead et al. prototyped the initial DAOS design as a next-generation HPC I/O stack by replacing POSIX file and directory abstractions with a distributed, object-based model featuring containers, versioned objects, and epoch-based consistency mechanisms \cite{daos-exascale-storage2016sc}.
 Liang et al. followed with a full system description of DAOS built on top of persistent memory, the Persistent Memory Development Kit (PMDK), NVMe SSDs, and the Storage Performance Development Kit (SPDK) \cite{daos-intro2020}. Hennecke et al. extended the architecture to use DRAM as the primary storage tier in place of the persistent memory, demonstrating that DAOS maintains competitive performance on commodity hardware \cite{daos-dram-intro2023}.
+
+In addition to the x86-based DAOS systems, Hennecke et al. evaluated the DAOS performance using ARM64-based clients \cite{daos-arm2023SCAsia}. Zhu et al. offloaded the DAOS client to a BlueField-3 DPU and found that RDMA performance on the DPU matched the x86 host \cite{daos-smartnic2025scw}.
+
+Architecture introduction -- DAOS client nodes, DAOS server/storage nodes. libdfs, libdaos, interception library, dfuse.
+
 
 
 
@@ -18,7 +23,7 @@ Liang et al. followed with a full system description of DAOS built on top of per
 Aurora introduction \cite{aurora-intro2025}. Slingshot RPC enhancement \cite{aurora-daos-slingshot-rpc2025cug}.
 
 \subsection{DAOS Performance Analysis}
-They also included performance results for a 10-node IO500 benchmarking \cite{daos-intro2020}. 
+
 {
 \color{blue}
 (Needs some comparison between our results to their results.)
@@ -26,8 +31,27 @@ They also included performance results for a 10-node IO500 benchmarking \cite{da
 
 IOR benchmarking with server and client sides scaling \cite{daos-scalability2023SCAsia}.
 
-The 20-node Aurora DAOS testbed results \cite{DAOS-aurora-20-node-test2024SC-W}. 
+The 20-node Aurora DAOS testbed results \cite{DAOS-aurora-20-node-test2024scw}. 
 
-DAOS performance exploring \cite{daos-perf-explore2024SC-W}.
+DAOS performance exploring \cite{daos-perf-explore2024scw}.
 
 DAOS vs Lustre \cite{daos-vs-lustre2022pdsw}.
+
+
+\begin{table}[htbp]
+\caption{Summaries of DAOS Benchmarking}
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Table}&\multicolumn{3}{|c|}{\textbf{Table Column Head}} \\
+\cline{2-4} 
+\textbf{Head} & \textbf{\textit{Table column subhead}}& \textbf{\textit{Subhead}}& \textbf{\textit{Subhead}} \\
+\hline
+copy& More table copy$^{\mathrm{a}}$& &  \\
+\hline
+\multicolumn{4}{l}{$^{\mathrm{a}}$Sample of a Table footnote.}
+\end{tabular}
+\label{tab1}
+\end{center}
+\end{table}
+
