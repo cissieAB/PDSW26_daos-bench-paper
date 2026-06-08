@@ -11,9 +11,12 @@
 \subsection{DAOS Architecture}
 
 Lofstead et al. prototyped the initial DAOS design as a next-generation HPC I/O stack by replacing POSIX file and directory abstractions with a distributed, object-based model featuring containers, versioned objects, and epoch-based consistency mechanisms \cite{daos-exascale-storage2016sc}.
-Liang et al. then presented a full system description of DAOS built on top of persistent memory (PMem) and NVMe SSDs \cite{daos-intro2020}. Hennecke et al. adapted the architecture to substitute DRAM for PMem, demonstrating that DAOS maintains competitive performance on commodity hardware \cite{daos-dram-intro2023}. 
+Liang et al. then presented a full description of the DAOS system built on top of persistent memory (PMem) and NVMe SSDs \cite{daos-intro2020}. Hennecke et al. adapted the architecture to replace PMem with DRAM, demonstrating that DRAM maintains competitive performance \cite{daos-dram-intro2023}. 
 
-Fig.~\ref{fig:daos-arch} shows the DAOS architecture, which consists of client/compute nodes and server/storage nodes. The \textit{libdaos} library is the fundamental client-side software component. \textit{libdfs} implements the POSIX abstractions over \textit{libdaos}. An interception library \textit{libpil4dfs} provides kernel bypass for I/O data, while \textit{dfuse} enables POSIX filesystem access via the Linux FUSE interface. The DAOS storage engine on the server nodes manages two tiers of storage: DRAM/PMem and NVMe SSDs. The RDMA-based data path between clients and servers traverses a high-speed fabric, such as HPE Slingshot or InfiniBand. Typically, a DAOS system is deployed with an odd number of server nodes.
+Fig.~\ref{fig:daos-arch} shows the DAOS architecture, which consists of client/compute nodes and server/storage nodes. The \textit{libdaos} library is the fundamental client-side software component. \textit{libdfs} implements the POSIX abstractions over \textit{libdaos}. An interception library \textit{libpil4dfs} bridges POSIX applications and \textit{libdfs}, providing kernel bypass for faster I/O, while \textit{dfuse} enables POSIX filesystem access via the Linux FUSE (filesystem in userspace) interface. The DAOS storage engine on the server nodes manages two tiers of storage: DRAM/PMem and NVMe SSDs. The RDMA-based data path between clients and servers traverses high-speed fabrics, such as HPE Slingshot or InfiniBand NICs.
+% Typically, a DAOS system is deployed with an odd number of server nodes.
+
+DAOS pool, DAOS container
 
 
 \subsection{DAOS Performance Analysis}

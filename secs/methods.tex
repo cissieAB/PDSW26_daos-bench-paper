@@ -5,11 +5,19 @@
 \subsection{Experimental Platforms}
 
 \subsubsection{Aurora}
-Aurora is Argonne National Lab's exascale supercomputer officially launched in January 2025, with DAOS as the major file system \cite{aurora-intro2025, DAOS-aurora-20-node-test2024scw}. We applied for a 100 TB DAOS storage space on Aurora under the \textit{daos\_user} group. According to our query results and Aurora documentation \cite{daos-aurora-guide}, this system contains server 126 nodes, each with a \dots.
+Aurora is Argonne National Lab's exascale supercomputer, with DAOS as the major file system \cite{aurora-intro2025, aurora-daos-slingshot-rpc2025cug, DAOS-aurora-20-node-test2024scw}. We applied for 100 TB DAOS storage space on Aurora under the \textit{daos\_user} group. According to the Aurora user guide \cite{daos-aurora-guide} and our query results, this group contains 128\footnote{In reality, only 126 or 127 were used.} storage nodes, each with a \dots.
 
 
 \subsubsection{Testbed A}
 
-Aurora introduction \cite{aurora-intro2025}. Slingshot RPC enhancement \cite{aurora-daos-slingshot-rpc2025cug}.
 
-\subsubsection{ Testbed}
+
+\subsection{Benchmarking Methods}
+
+\subsubsection{fio}
+
+\cite{fio-github}
+
+
+\subsubsection{ior}
+ior is an MPI-native parallel I/O benchmark \cite{io500-design2019ics, ior-github}
