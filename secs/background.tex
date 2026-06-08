@@ -14,9 +14,10 @@ Lofstead et al. prototyped the initial DAOS design as a next-generation HPC I/O 
 Liang et al. then presented a full description of the DAOS system built on top of persistent memory (PMem) and NVMe SSDs \cite{daos-intro2020}. Hennecke et al. adapted the architecture to replace PMem with DRAM, demonstrating that DRAM maintains competitive performance \cite{daos-dram-intro2023}. 
 
 Fig.~\ref{fig:daos-arch} shows the DAOS architecture, which consists of client/compute nodes and server/storage nodes. The \textit{libdaos} library is the fundamental client-side software component. \textit{libdfs} implements the POSIX abstractions over \textit{libdaos}. An interception library \textit{libpil4dfs} bridges POSIX applications and \textit{libdfs}, providing kernel bypass for faster I/O, while \textit{dfuse} enables POSIX filesystem access via the Linux FUSE (filesystem in userspace) interface. The DAOS storage engine on the server nodes manages two tiers of storage: DRAM/PMem and NVMe SSDs. The RDMA-based data path between clients and servers traverses high-speed fabrics, such as HPE Slingshot or InfiniBand NICs.
-% Typically, a DAOS system is deployed with an odd number of server nodes.
 
-DAOS pool, DAOS container
+DAOS organizes storage into three hierarchical abstractions. A \textit{DAOS pool} is a storage reservation that spans a number of storage engines and is the only abstraction tied to physical storage capacity. A pool holds up to hundreds of \textit{DAOS containers}, which are collections of \textit{DAOS objects} accessible through different interfaces, such as POSIX I/O, HDF5 \cite{hdf5-daos2022tpds}, and PYTHON. When creating a container, users can specify a series of container properties, such as the container type, the redundancy factor, and the erasure coding cell size.
+
+%  (\textit{rd\_fac})
 
 
 \subsection{DAOS Performance Analysis}
@@ -52,6 +53,8 @@ copy& More table copy$^{\mathrm{a}}$& &  \\
 \label{tab1}
 \end{center}
 \end{table}
+
+Latham et al. reported initial DAOS performance results on a 20-node storage system sharing Aurora's hardware specifications \cite{DAOS-aurora-20-node-test2024scw}.
 
 In addition to the x86-based DAOS systems, Hennecke et al. evaluated DAOS performance using ARM64-based clients \cite{daos-arm2023SCAsia}. Zhu et al. offloaded the DAOS client to a BlueField-3 DPU and found that RDMA bandwidth on the DPU matched that of the x86 host \cite{daos-smartnic2025scw}.
 
