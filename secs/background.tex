@@ -13,16 +13,30 @@
 Lofstead et al. prototyped the initial DAOS design as a next-generation HPC I/O stack by replacing POSIX file and directory abstractions with a distributed, object-based model featuring containers, versioned objects, and epoch-based consistency mechanisms \cite{daos-exascale-storage2016sc}.
 Liang et al. then presented a full description of the DAOS system built on top of persistent memory (PMem) and NVMe SSDs \cite{daos-intro2020}. Hennecke et al. adapted the architecture to replace PMem with DRAM, demonstrating that DRAM maintains competitive performance \cite{daos-dram-intro2023}. 
 
-Fig.~\ref{fig:daos-arch} shows the DAOS architecture, which consists of client/compute nodes and server/storage nodes. The \textit{libdaos} library is the fundamental client-side software component. \textit{libdfs} implements the POSIX abstractions over \textit{libdaos}. An interception library \textit{libpil4dfs} bridges POSIX applications and \textit{libdfs}, providing kernel bypass for faster I/O, while \textit{dfuse} enables POSIX filesystem access via the Linux FUSE (filesystem in userspace) interface. The DAOS storage engine on the server nodes manages two tiers of storage: DRAM/PMem and NVMe SSDs. The RDMA-based data path between clients and servers traverses high-speed fabrics, such as HPE Slingshot or InfiniBand NICs.
+Fig.~\ref{fig:daos-arch} shows the DAOS architecture, which consists of client/compute nodes and server/storage nodes. The \textit{libdaos} library is the fundamental client-side software component. \textit{libdfs} implements the POSIX abstractions over \textit{libdaos}. An interception library \textit{libpil4dfs} bridges POSIX applications and \textit{libdfs}, providing kernel bypass for faster I/O, while \textit{dfuse} enables POSIX filesystem access via the Linux FUSE (filesystem in userspace) interface. The DAOS storage engines on the server node manage two tiers of storage: DRAM/PMem and NVMe SSDs. The RDMA-based data path between clients and servers traverses high-speed fabrics, such as HPE Slingshot or InfiniBand.
 
-DAOS organizes storage into three hierarchical abstractions. A \textit{DAOS pool} is a storage reservation that spans a number of storage engines and is the only abstraction tied to physical storage capacity. A pool holds up to hundreds of \textit{DAOS containers}, which are collections of \textit{DAOS objects} accessible through different interfaces, such as POSIX I/O, HDF5 \cite{hdf5-daos2022tpds}, and PYTHON. When creating a container, users can specify a series of container properties, such as the container type, the redundancy factor, and the erasure coding cell size.
+DAOS organizes storage into three hierarchical abstractions: pools, containers, and objects.
+A pool is a storage reservation spanning one or more storage engines and is the only abstraction tied to physical capacity. Within a pool, a container serves as a logical namespace capable of holding billions of objects. DAOS containers support multiple access interfaces, including POSIX I/O, HDF5~\cite{hdf5-daos2022tpds}, Python (via \textit{pydaos}), etc., each corresponding to a container type.
+When creating containers, users configure properties such as the container type, redundancy factor, and erasure coding cell size. 
 
-%  (\textit{rd\_fac})
+
 
 
 \subsection{DAOS Performance Analysis}
 
+\input{tables/perf-lit-review}
 
+\textit{fio} (Flexible I/O Tester)~\cite{fio-github} and IOR~\cite{io500-design2019ics,
+ior-github} are widely used benchmarking tools for measuring storage throughput, latency, and IOPS.
+
+\textit{fio} targets single-node and supports a broad range of I/O engines and access patterns. In this paper, we evaluate two \textit{fio} I/O engines: \textit{pvsync} used with the DAOS POSIX containers, and \textit{dfs} used with the native (UNKNOWN) containers.
+
+IOR is an MPI-native HPC I/O benchmark suite designed for large-scale parallel storage
+evaluation. Its \textit{ior} component measures aggregate bulk I/O throughput across MPI ranks, while \textit{mdtest} targets metadata operations such as file creation and removal.
+IO500~\cite{io500-design2019ics} builds on \textit{ior} and \textit{mdtest} to produce a composite storage ranking score, computed as the geometric mean of bandwidth and metadata performance across four pre-defined workloads: \textit{ior easy}, \textit{ior hard}, \textit{mdtest easy}, and \textit{mdtest hard}. It serves as a standard for comparing large-scale HPC storage systems and provides a useful reference point for contextualizing DAOS performance results.
+
+
+Both tools have been widely adopted in prior DAOS performance studies, where we summarize their configurations, workloads and key findings in Table~\ref{tab:perf-lit-review}. 
 {
 \color{blue}
 (Needs some comparison between our results to their results.)
@@ -30,29 +44,10 @@ DAOS organizes storage into three hierarchical abstractions. A \textit{DAOS pool
 
 IOR benchmarking with server and client sides scaling \cite{daos-scalability2023SCAsia}.
 
-The 20-node Aurora DAOS testbed results \cite{DAOS-aurora-20-node-test2024scw}. 
 
 DAOS performance exploring \cite{daos-perf-explore2024scw}.
 
 DAOS vs Lustre \cite{daos-vs-lustre2022pdsw}.
-
-
-\begin{table}[htbp]
-\caption{Summary of DAOS Benchmarking}
-\begin{center}
-\begin{tabular}{|c|c|c|c|}
-\hline
-\textbf{Table}&\multicolumn{3}{|c|}{\textbf{Table Column Head}} \\
-\cline{2-4} 
-\textbf{Head} & \textbf{\textit{Table column subhead}}& \textbf{\textit{Subhead}}& \textbf{\textit{Subhead}} \\
-\hline
-copy& More table copy$^{\mathrm{a}}$& &  \\
-\hline
-\multicolumn{4}{l}{$^{\mathrm{a}}$Sample of a Table footnote.}
-\end{tabular}
-\label{tab1}
-\end{center}
-\end{table}
 
 Latham et al. reported initial DAOS performance results on a 20-node storage system sharing Aurora's hardware specifications \cite{DAOS-aurora-20-node-test2024scw}.
 
