@@ -1,3 +1,29 @@
 \section{Evaluation Results}
 
 \subsection{Single-Node Performance}
+
+
+
+
+
+\subsubsection{fio Tail Latency}
+
+Prior work has shown that saturating DAOS throughput requires a sufficient number of concurrent \textit{fio} jobs and a large enough block size comparable to the chunk size (1~MiB) of the POSIX container \cite{mei2024sc-poster,DAOS-aurora-20-node-test2024scw}. In this work, we found that though with similar throughput and concurrency, the latency patterns varies.
+
+
+
+The fio oncurrency is governed by two parameters: the number of jobs and the I/O queue depth, noted as \texttt{nj} and \texttt{iod} in Fig. \ref{fig:fio-tail-latency-breakdown}. 
+On Sys-B, we ran fio randwrite with the dfs engine, 
+When 
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{figures/fio-tail_latency_breakdown.pdf}
+
+    \vspace{-1em}
+    \caption{Tail latency breakdown of \textit{fio} random write workloads.}
+    \label{fig:fio-tail-latency-breakdown}
+\end{figure}
+
+\subsubsection{fio engine comparison}
+

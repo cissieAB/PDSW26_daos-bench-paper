@@ -6,7 +6,7 @@
 \input{tables/platform-spec.tex}
 
 \subsubsection{Aurora}
-Aurora is Argonne National Laboratory's exascale supercomputer with over 10,000 compute nodes \cite{aurora-intro2025}. Aurora currently has the largest DAOS deployment in production, comprising 1,024 storage nodes \cite{aurora-daos-slingshot-rpc2025cug, io500-ics26}. We were allocated a 100~TB DAOS pool under the \textit{daos\_user} group. Per the Aurora user guide \cite{daos-aurora-guide} and our system queries, this group spans 128\footnote{Only 126--127 nodes were active during the experiments. } storage nodes, each with 16 PMem devices and 2 200Gbps Slingshot-11 Ethernet NICs.
+Aurora is Argonne National Laboratory's exascale supercomputer with over 10,000 compute nodes \cite{aurora-intro2025}. Aurora currently has the largest DAOS deployment in production, comprising 1,024 storage nodes \cite{aurora-daos-slingshot-rpc2025cug, io500-ics26}. We were allocated a 100~TB DAOS pool under the \texttt{daos\_user} group. Per the Aurora user guide \cite{daos-aurora-guide} and our system queries, this group spans 128\footnote{Only 126--127 nodes were active during the experiments. } storage nodes, each with 16 PMem devices and 2 200Gbps Slingshot-11 Ethernet NICs.
 
 The Aurora supercomputer nodes are interconnected via a large-scale Dragonfly network \cite{aurora-intro2025, daos-aurora-guide}. The 1,024 DAOS server nodes in 64 racks are organized into 8 Dragonfly groups, while compute/client nodes are distributed across 166 groups. This topology enables efficient communication between arbitrary client-server pairs, yet still incurs non-negligible latency due to multi-hop routing. This explains why the bandwidth numbers measured in our experiments are lower than those reported in \cite{DAOS-aurora-20-node-test2024scw}, which is based on the same node specifications but a much simpler network topology.
 
@@ -18,15 +18,19 @@ Table~\ref{tab:platform-cmp} summarizes the key characteristics of both systems.
 
 \subsection{Benchmark Configurations}
 
-\subsubsection{fio}
+\subsubsection{POSIX Mounting Approaches}
 
-We installed fio v3.42 on both platforms. We evaluate it with two I/O engines: \textit{pvsync} used with the DAOS POSIX containers, and \textit{dfs} used with the native (\texttt{unknown}) containers.
+Creating a POSIX DAOS container and mounting it at a directory via \textit{dfuse} provides the most portable DAOS storage access. However, this approach incurs overhead that can significantly impact performance measurements. To demonstrate this effect, we ran \textit{fio} with three approaches:
 
+\begin{enumerate}[label=\alph*.]
+    \item dfuse: Accessing DAOS via dfuse, running \textit{fio} with the \texttt{pvsync} I/O engine, which bypasses the page cache and issues synchronous I/O requests.
+    \item dfuse + libpil4dfs: The same dfuse mount and \textit{fio} I/O engine, but with \texttt{libpil4dfs} preloaded via \texttt{LD\_PRELOAD} on Sys-A.
+    \item dfs: Using \textit{fio}'s native \texttt{dfs} I/O engine without mounting a dfuse filesystem.
+\end{enumerate}
 
-\textit{fio} task parallelism is controlled by two parameters: the number of jobs (\texttt{numjobs}) and the I/O queue depth (\texttt{iodepth}).
 
 % giving an effective parallelism of $\texttt{numjobs} \times \texttt{iodepth}$ concurrent requests.
 
 
-\subsubsection{}
+\subsubsection{ior}
 
