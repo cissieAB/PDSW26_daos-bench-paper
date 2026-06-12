@@ -3,25 +3,36 @@
 \subsection{Single-Node Performance}
 
 
+\subsubsection{\textit{fio} Concurrency and Tail Latency}
 
+Prior work has shown that saturating DAOS throughput using \textit{fio} requires a sufficient number of concurrent jobs and a large enough block size comparable to the chunk size (1~MiB) of the POSIX container \cite{mei2024sc-poster, DAOS-aurora-20-node-test2024scw}. 
+In this work, we further investigate the effect of \textit{fio} job concurrency on I/O tail latency.
 
-
-\subsubsection{Tail Latency}
-
-Prior work has shown that saturating DAOS throughput using \textit{fio} requires a sufficient number of concurrent jobs and a large enough block size comparable to the chunk size (1~MiB) of the POSIX container \cite{mei2024sc-poster, DAOS-aurora-20-node-test2024scw}. In this work, we further investigate the impact on the latency.
-
-The fio concurrency is governed by two parameters: the number of jobs and the I/O queue depth, noted as \texttt{nj} and \texttt{iod} in Fig. \ref{fig:fio-tail-latency-breakdown}. 
-On Sys-B, we ran fio randwrite with the dfs engine, 
-When 
+The \textit{fio} job concurrency is controlled by two parameters: the number of jobs (denoted $nj$), where each job is an independent worker thread that issues I/O requests, and the I/O queue depth (denoted $iod$), which specifies how many I/O requests each job can have in flight simultaneously. Their product $nj \times iod$ therefore determines the total number of outstanding I/O requests at any given time. 
+We evaluate five $nj$/$iod$ combinations on Sys-B using a \textit{fio} \texttt{randwrite} workload, keeping their product fixed at 256, with a block size of 1~MiB, a run time of 60 seconds, and the \texttt{dfs} I/O engine. Across all configurations, we observe similar mean latency of 10.8--11.5~milliseconds (ms), while the maximum latency varies from 83.1 to 165.0~ms, as shown in Fig.~\ref{fig:fio-latency}. 
 
 \begin{figure}[htbp]
     \centering
+    \includegraphics[width=0.95\linewidth]{figures/fio-latency.pdf}
+
+    \vspace{-1em}
+    \caption{The min/mean/max latency of \textit{fio} random write workloads on Sys-B.}
+    \label{fig:fio-latency}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
     \includegraphics[width=0.95\linewidth]{figures/fio-tail_latency_breakdown.pdf}
 
     \vspace{-1em}
-    \caption{Tail latency breakdown of \textit{fio} random write workloads.}
+    \caption{Tail latency breakdown of \textit{fio} random write workloads on Sys-B.}
     \label{fig:fio-tail-latency-breakdown}
 \end{figure}
 
-\subsubsection{fio engine comparison}
+
+
+In \textit{fio} reports, latency is further broken down into the minimum, mean, and maximum submission latency (denoted $slat$) and the P1--P99.99 completion latency (denoted $clat$). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean/max submission latency and P50/P99.99 completion latency. The submission latency is as low as 0.03--0.05~ms across all five configurations, but when the queue depth is as small as 4 or 8, the submission latency reaches up to 59.08~ms, indicating that high job counts with shallow queue depths significantly amplify submission overhead. The completion latency is the dominant part of the overall latency. The P50 completion latency increases with $nj$, but when $nj$ is as small as 4 or 8, the P99.99 tail latency is as high as 149.95~ms. These results demonstrate that tail latency is strongly sensitive to the $nj$/$iod$ split, even when total I/O concurrency and mean throughput/latency remain comparable.
+
+
+\subsubsection{\textit{fio} Engine Comparison}
 
