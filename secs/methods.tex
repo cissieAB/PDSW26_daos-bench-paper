@@ -18,13 +18,13 @@ Table~\ref{tab:platform-cmp} summarizes the key characteristics of both systems.
 
 \subsection{Benchmark Configurations}
 
-\subsubsection{POSIX Mounting Approaches}
+\subsubsection{DAOS POSIX container access}
 
-Creating a POSIX DAOS container and mounting it at a directory via \textit{dfuse} provides the most portable DAOS storage access. However, this approach incurs overhead that can significantly impact performance measurements. To demonstrate this effect, we ran \textit{fio} with three approaches:
+Creating a POSIX DAOS container and mounting it at a directory via \textit{dfuse} provides the most portable access to DAOS storage. However, this approach incurs overhead and can significantly impact performance measurements. To demonstrate this effect, we evaluate the single-node \textit{fio} access with three approaches:
 
 \begin{enumerate}[label=\alph*.]
     \item dfuse: Accessing DAOS via dfuse, running \textit{fio} with the \texttt{pvsync} I/O engine, which bypasses the page cache and issues synchronous I/O requests.
-    \item dfuse + libpil4dfs: The same dfuse mount and \textit{fio} I/O engine, but with \texttt{libpil4dfs} preloaded via \texttt{LD\_PRELOAD} on Sys-A.
+    \item dfuse + libpil4dfs: The same dfuse mounting and \texttt{pvsync} engine, but with \texttt{libpil4dfs} preloaded via \texttt{LD\_PRELOAD} on Sys-A.
     \item dfs: Using \textit{fio}'s native \texttt{dfs} I/O engine without mounting a dfuse filesystem.
 \end{enumerate}
 
@@ -32,5 +32,5 @@ Creating a POSIX DAOS container and mounting it at a directory via \textit{dfuse
 % giving an effective parallelism of $\texttt{numjobs} \times \texttt{iodepth}$ concurrent requests.
 
 
-\subsubsection{ior}
+\subsubsection{fio read/write patterns}
 
