@@ -18,16 +18,18 @@ Table~\ref{tab:platform-cmp} summarizes the key characteristics of both systems.
 
 \subsection{DAOS Benchmark Configurations}
 
-\subsubsection{fio read/write patterns}
+\subsubsection{fio read/write pattern}
 
 In traditional filesystems, sequential access significantly outperforms random. DAOS, in contrast, narrows this gap through its log-structured storage engine and byte-addressable object store. 
 
-To investigate this effect, we test \textit{fio} under five read/write mixes: (1) read-only; (2) read-heavy (20\% write); (3) read-balanced (50\% write); (4) write-heavy (80\% write); and (5) write-only, each mix with both random and sequential access. We use the \texttt{dfs} I/O engine with block sizes ranging from 4~KiB to 4~MiB. This configuration enables a systematic comparison of DAOS sequential versus random I/O performance across varying read/write ratios.
+To investigate this effect, we test \textit{fio} under five read/write mixes: (1) read-only; (2) read-heavy (20\% write); (3) read-balanced (50\% write); (4) write-heavy (80\% write); and (5) write-only, each mix with both random and sequential access. We use the \texttt{dfs} I/O engine with block sizes ranging from 4~KiB to 4~MiB. This configuration enables a systematic comparison of DAOS sequential versus random I/O performance. 
+
+The five mixes also mirror the distinct stages of a scientific streaming workflow: write-only and write-heavy configurations correspond to data ingestion phases where detectors or simulations produce data at high rate; balanced and read-heavy configurations represent concurrent online analysis, where processed and raw data coexist; and read-only configurations reflect post-processing or visualization stages that consume previously stored data.
 
 
-\subsubsection{DAOS container access approaches}
+\subsubsection{DAOS POSIX container access}
 
-Creating a POSIX DAOS container and mounting it at a directory via \textit{dfuse} provides the most portable access to DAOS storage. However, this approach incurs overhead and can significantly impact performance measurements. To demonstrate this effect, we evaluate the single-node \textit{fio} performance with three approaches:
+Mounting a POSIX DAOS container via \textit{dfuse} provides the most portable access path, allowing unmodified POSIX applications to use DAOS storage through standard filesystem interfaces. However, this approach incurs overhead and can significantly impact performance measurements. To demonstrate this effect, we evaluate the single-node \textit{fio} performance with three approaches:
 
 \begin{enumerate}[label=(\alph*)]
     \item dfuse: Accessing DAOS via dfuse, running \textit{fio} with the \texttt{pvsync} I/O engine, which bypasses the page cache and issues synchronous I/O requests.
@@ -43,6 +45,22 @@ Creating a POSIX DAOS container and mounting it at a directory via \textit{dfuse
 %     \item DAOS native: Using IOR's built-in \texttt{DAOS} API backend (\texttt{--api=DAOS}), which bypasses POSIX entirely and accesses the container through the native DFS interface.
 % \end{enumerate}
 
+\subsubsection{I/O concurrency}
+
+In a scientific streaming system such as E2SAR \cite{e2sar-github}, multiple data streams are produced and consumed simultaneously across a network of nodes, placing high concurrent I/O demand on the storage backend. We study two dimensions of this concurrency: intra-node concurrency, where a single client node issues multiple parallel I/O requests using \textit{fio}'s $nj$ and $iod$ parameters; and inter-node horizontal scaling, where multiple client nodes access DAOS simultaneously, evaluated with IOR.
+
+The \textit{fio} job concurrency is controlled by two parameters: the number of jobs (denoted $nj$), where each job is an independent worker thread that issues I/O requests, and the I/O queue depth (denoted $iod$), which specifies how many I/O requests each job can have in flight simultaneously. Their product $nj \times iod$ therefore determines the overall concurrency level. In addition, the block size (denoted $bs$) significantly influences throughput/latency. We systematically vary these parameters across three experiment designs:
+
+\begin{enumerate}[label=(\alph*)]
+    \item Single-job ($nj = 1$), sweep $bs$ and $iod$. The tested block sizes are 4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB, corresponding to the NVMe sector size, a typical sub-chunk I/O unit, the DAOS POSIX container chunk size, the huge page size, and bulk transfers, respectively.
+    \item Fix $iod$, sweep $nj$ and $bs$. This isolates the combined effect of job-level parallelism and block size at a fixed per-job queue depth.
+    \item Fix total concurrency ($nj \times iod$) and  $bs$, sweep the $nj/iod$ split. This quantifies how concurrency structure affects tail latency at constant throughput.
+\end{enumerate}
 
 
-\subsection{DAOS v.s. Other Storage Systems}
+
+\subsection{DAOS vs.\ Other Storage Systems}
+
+Both NVMe over Fabrics (NVMe-oF) and DAOS aim to close the gap between compute and fast storage by minimizing latency and maximizing bandwidth to NVMe media across a high-speed fabric.
+
+The client node of Sys-B is also mounted to a read-only NVMe-oF storage via a 100 Gbps Ethernet link. 
