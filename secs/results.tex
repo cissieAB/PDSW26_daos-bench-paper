@@ -1,16 +1,5 @@
 \section{Evaluation Results}
-\subsection{\textit{fio} Read/Write Patterns}
 
-\begin{figure*}[thbp]
-    \centering
-    \includegraphics[width=0.98\linewidth]{figures/fio-bw-all-pattern-sysb.pdf}
-
-    \vspace{-1em}
-    \caption{Achieved \textit{fio} bandwidth on Sys-B.}
-    \label{fig:fio-sysb-all-patterns}
-\end{figure*}
-
-\subsection{\textit{fio} Engine Comparison}
 
 \subsection{Performance and Concurrency}
 \subsubsection{fio Single-job performance}
@@ -53,6 +42,19 @@ In \textit{fio} reports, latency is further broken down into submission latency 
 
 % Notably, all five configurations achieve throughput of 21.5--23.0~GiB/s, utilizing over 80\% of the 200~Gbps NIC bandwidth, confirming that \textit{fio} with the \texttt{dfs} engine can effectively saturate DAOS.
 
+
+\subsection{\textit{fio} Read/Write Patterns}
+
+\begin{figure*}[thbp]
+    \centering
+    \includegraphics[width=0.98\linewidth]{figures/fio-bw-all-pattern-sysb.pdf}
+
+    \vspace{-1em}
+    \caption{Achieved \textit{fio} bandwidth on Sys-B.}
+    \label{fig:fio-sysb-all-patterns}
+\end{figure*}
+
+\subsection{\textit{fio} Engine Comparison}
 
 
 \subsection{DAOS vs NVMe-oF}
