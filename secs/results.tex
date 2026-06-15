@@ -12,8 +12,19 @@
 
 \subsection{\textit{fio} Engine Comparison}
 
+\subsection{Performance and Concurrency}
+\subsubsection{fio Single-job performance}
+\begin{figure*}[thbp]
+    \centering
+    \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_seqread.pdf}
+    \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_randwrite.pdf}
+    
+    \vspace{-1em}
+    \caption{\textit{fio} single-job bandwidth, IOPS, and mean latency as a function of block size and queue depth on Sys-B: sequential read (top) and random write (bottom).}
+    \label{fig:fio-single-job-heatmap}
+\end{figure*}
 
-\subsection{\textit{fio} Concurrency and Tail Latency}
+\subsubsection{\textit{fio} Tail latency under the same concurrency level}
 
 \begin{figure}[htbp]
     \centering
@@ -33,13 +44,6 @@
     \label{fig:fio-tail-latency-breakdown}
 \end{figure}
 
-{\color{orange}
-
-Prior work has shown that saturating DAOS throughput using \textit{fio} requires a sufficient number of concurrent jobs and a large enough block size comparable to the chunk size (1~MiB) of the POSIX container \cite{mei2024sc-poster, DAOS-aurora-20-node-test2024scw}. 
-In this work, we further investigate the effect of \textit{fio} job concurrency on I/O tail latency.
-
-}
-
 
 
 We evaluate five $nj/iod$ combinations on Sys-B using a \textit{fio} \texttt{randwrite} workload, keeping their product fixed at 256, with a block size of 1~MiB, a run time of 60 seconds, and the \texttt{dfs} I/O engine. Across all configurations, the mean bandwidth (21.5--23.0~GiB/s) and mean latency (10.8--11.5~ms) remain consistent, while the maximum latency varies widely from 83.1 to 165.0~ms, as shown in Fig.~\ref{fig:fio-latency}.
@@ -58,7 +62,7 @@ In \textit{fio} reports, latency is further broken down into submission latency 
     \includegraphics[width=0.98\linewidth]{figures/fio_cmp_bw_iops_cpu.pdf}
     
     \vspace{-1em}
-    \caption{Achieved \textit{fio} bandwidth on Sys-B.}
+    \caption{\textit{fio} bandwidth, IOPS, and CPU utilization comparing DAOS and NVMe-oF on Sys-B.}
     \label{fig:daos-vs-nvmeof-cpu}
 \end{figure*}
 
@@ -67,7 +71,7 @@ In \textit{fio} reports, latency is further broken down into submission latency 
     \includegraphics[width=0.98\linewidth]{figures/fio_cmp_latency.pdf}
     
     \vspace{-1em}
-    \caption{Achieved \textit{fio} bandwidth on Sys-B.}
+    \caption{\textit{fio} latency comparison between DAOS and NVMe-oF on Sys-B.}
     \label{fig:daos-vs-nvmeof-latency}
 \end{figure*}
 

@@ -47,12 +47,12 @@ Mounting a POSIX DAOS container via \textit{dfuse} provides the most portable ac
 
 \subsubsection{I/O concurrency}
 
-In a scientific streaming system such as E2SAR \cite{e2sar-github}, multiple data streams are produced and consumed simultaneously across a network of nodes, placing high concurrent I/O demand on the storage backend. We study two dimensions of this concurrency: intra-node concurrency, where a single client node issues multiple parallel I/O requests using \textit{fio}'s $nj$ and $iod$ parameters; and inter-node horizontal scaling, where multiple client nodes access DAOS simultaneously, evaluated with IOR.
+In a scientific streaming system such as E2SAR \cite{e2sar-github}, multiple data streams are produced and consumed simultaneously across a network of nodes, placing high concurrent I/O demand on the storage backend. We study two dimensions of this concurrency: intra-node concurrency, where a single client node issues multiple parallel I/O requests using \textit{fio}; and inter-node horizontal scaling, where multiple client nodes access DAOS simultaneously, evaluated with IOR.
 
 The \textit{fio} job concurrency is controlled by two parameters: the number of jobs (denoted $nj$), where each job is an independent worker thread that issues I/O requests, and the I/O queue depth (denoted $iod$), which specifies how many I/O requests each job can have in flight simultaneously. Their product $nj \times iod$ therefore determines the overall concurrency level. In addition, the block size (denoted $bs$) significantly influences throughput/latency. We systematically vary these parameters across three experiment designs:
 
 \begin{enumerate}[label=(\alph*)]
-    \item Single-job ($nj = 1$), sweep $bs$ and $iod$. The tested block sizes are 4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB, corresponding to the NVMe sector size, a typical sub-chunk I/O unit, the DAOS POSIX container chunk size, the huge page size, and bulk transfers, respectively.
+    \item Single-job, sweep $bs$ and $iod$. The tested block sizes are 4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB, corresponding to the NVMe sector size, a typical sub-chunk I/O unit, the DAOS POSIX container chunk size, the huge page size, and bulk transfers, respectively.
     \item Fix $iod$, sweep $nj$ and $bs$. This isolates the combined effect of job-level parallelism and block size at a fixed per-job queue depth.
     \item Fix total concurrency ($nj \times iod$) and  $bs$, sweep the $nj/iod$ split. This quantifies how concurrency structure affects tail latency at constant throughput.
 \end{enumerate}
