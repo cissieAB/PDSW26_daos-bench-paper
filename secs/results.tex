@@ -2,14 +2,14 @@
 
 
 \subsection{Performance and Concurrency}
-\subsubsection{fio Single-job performance}
+\subsubsection{fio I/O depth scaling}
 \begin{figure*}[thbp]
     \centering
     \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_seqread.pdf}
     \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_randwrite.pdf}
     
     \vspace{-1em}
-    \caption{\textit{fio} single-job bandwidth, IOPS, and mean latency as a function of block size and queue depth on Sys-B: sequential read (top) and random write (bottom).}
+    \caption{\textit{fio} single-job bandwidth, IOPS, and mean latency as a function of block size and I/O queue depth.}
     \label{fig:fio-single-job-heatmap}
 \end{figure*}
 
