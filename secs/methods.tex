@@ -12,18 +12,20 @@ The Aurora supercomputer nodes are interconnected via a large-scale Dragonfly ne
 
 
 \subsubsection{Our Testbed}
-We host a DAOS testbed of 3 storage nodes. Unlike Aurora, this testbed uses DRAM as the first-tier storage and InfiniBand as the interconnect. A single DAOS client node accesses it via a 200~Gbps link. The server and client nodes are connected to the same InfiniBand switch, ensuring low-latency RDMA access.
+We host a DAOS testbed of 3 storage nodes. Unlike Aurora, this testbed uses DRAM as the first-tier storage and InfiniBand as the interconnect. A single DAOS client node accesses it via a 200~Gbps (23.3 GiB/s) link. The server and client nodes are connected to the same InfiniBand switch, ensuring low-latency RDMA access.
 
 Table~\ref{tab:platform-cmp} summarizes the key characteristics of both systems. For simplicity, we refer to the two platforms as Sys-A and Sys-B in the rest of the paper.
 
-\subsection{Benchmark Configurations}
+\subsection{DAOS Benchmark Configurations}
 
-\subsubsection{Memory access patterns}
+\subsubsection{fio read/write patterns}
 
-In traditional filesystems, sequential access significantly outperforms random. DAOS, however, narrows this gap through its log-structured storage engine, which serializes writes at the device level regardless of the client access pattern, and byte-addressable object store, which eliminates rotational seek latency. To investigate this effect, we test \textit{fio} under five read/write mixes: (1) read-only; (2) read-heavy (20\% write); (3) read-balanced (50 \% write); (4) write-heavy (80\% write); and (5) write-only, each run with both random and sequential access patterns, using the \texttt{dfs} I/O engine with block sizes ranging from 4~KiB to 4~MiB. This configuration enables a systematic comparison of DAOS sequential versus random I/O performance across varying read/write ratios.
+In traditional filesystems, sequential access significantly outperforms random. DAOS, in contrast, narrows this gap through its log-structured storage engine and byte-addressable object store. 
+
+To investigate this effect, we test \textit{fio} under five read/write mixes: (1) read-only; (2) read-heavy (20\% write); (3) read-balanced (50\% write); (4) write-heavy (80\% write); and (5) write-only, each mix with both random and sequential access. We use the \texttt{dfs} I/O engine with block sizes ranging from 4~KiB to 4~MiB. This configuration enables a systematic comparison of DAOS sequential versus random I/O performance across varying read/write ratios.
 
 
-\subsubsection{DAOS POSIX container access}
+\subsubsection{DAOS container access approaches}
 
 Creating a POSIX DAOS container and mounting it at a directory via \textit{dfuse} provides the most portable access to DAOS storage. However, this approach incurs overhead and can significantly impact performance measurements. To demonstrate this effect, we evaluate the single-node \textit{fio} performance with three approaches:
 
@@ -43,4 +45,4 @@ Creating a POSIX DAOS container and mounting it at a directory via \textit{dfuse
 
 
 
-
+\subsection{DAOS v.s. Other Storage Systems}
