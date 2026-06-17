@@ -49,8 +49,8 @@ Notably, the achieved bandwidth across all five configurations exceeds 90\% of t
 
 \subsection{Workload Read/Write Pattern}
 
-\begin{figure*}[thbp]
-    \centering
+\begin{figure*}[htbp]
+\centering
     \includegraphics[width=0.98\linewidth]{figures/fio-bw-all-pattern-sysb.pdf}
 
     \vspace{-1em}
@@ -64,9 +64,9 @@ Notably, the achieved bandwidth across all five configurations exceeds 90\% of t
 
 {\color{blue}
 
-Of the two interception libraries, \texttt{libpil4dfs} corrupts \textit{fio} output and is therefore excluded. We conduct a \texttt{randwrite} workload with $nj{=}16$, $iod{=}16$, and $bs{=}1$\,MiB across the \texttt{dfs}, \texttt{psync}, \texttt{pvsync2}, and \texttt{libaio} engines on Sys-A. Without any interception library, the three POSIX engines yield 13--15~GiB/s. Preloading \texttt{libioil} raises \texttt{psync} bandwidth from 13.x to 33.x~GiB/s, while \texttt{pvsync2} and \texttt{libaio} are almost unaffected, consistent with \texttt{libioil} intercepting only synchronous POSIX calls. The native \texttt{dfs} engine achieves the highest bandwidth at 89.5~GiB/s.
+Of the two interception libraries, \texttt{libpil4dfs} causes corruption in \textit{fio} and is therefore excluded. We run a \texttt{randwrite} workload with $nj{=}16$ and $bs{=}1$\,MiB across the \texttt{dfs}, \texttt{psync}, \texttt{pvsync2}, and \texttt{libaio} I/O engines on Sys-A, repeating each configuration 10 times and reporting the median. Without any interception library, the three POSIX engines yield 13--15~GiB/s. Preloading \texttt{libioil} raises \texttt{psync} bandwidth from 13.x to 33.x~GiB/s, while \texttt{pvsync2} and \texttt{libaio} are unaffected, consistent with \texttt{libioil} intercepting only synchronous POSIX calls. The native \texttt{dfs} engine achieves the highest bandwidth at 88.1~GiB/s.
 
-However, we also observe that CPU utilization reaches 97\% with the \texttt{dfs} engine, while the other engines remain below 30\%. Despite Sys-A's aggregated 1{,}600~Gbps NIC capacity, the \texttt{dfs} engine's  89.5~GiB/s (approximately 769~Gbps) bandwidth suggests the \textit{fio} \texttt{dfs} performance is CPU-bound rather than network-limited.
+The \texttt{dfs} engine, however, drives client CPU utilization to 93\%, whereas all other engines remain below 30\%. Although 88.1~GiB/s is the peak observed, it represents only $\sim$56~Gbps of Sys-A's aggregated 1{,}600~Gbps NIC capacity, confirming that \textit{fio} \texttt{dfs} throughput is CPU-bound rather than network-limited.
 }
 
 \subsubsection{IOR}
