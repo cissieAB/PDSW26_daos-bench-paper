@@ -5,17 +5,38 @@
 \section{Evaluation Results}
 \subsection{I/O Concurrency}
 
-\begin{figure*}[hbtp]
-    \centering \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_seqread.pdf}
-    \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_randwrite.pdf}
+
+
+
+\subsubsection{Single-Process I/O Queue Depth Scaling}
+
+\begin{figure*}[htbp]
+    \centering \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_seqread_iod-bs.pdf}
+    \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_randwrite_iod-bs.pdf}
     
     \vspace{-1em}
     \caption{\textit{fio} single-job bandwidth, IOPS, and mean latency as a function of block size and I/O queue depth.}
     \label{fig:fio-single-job-heatmap}
 \end{figure*}
-\subsubsection{Single-Process I/O Queue Depth Scaling}
 
-\subsubsection{Single-Node Number of Jobs Scaling}
+Fig.~\ref{fig:fio-single-job-heatmap} sweeps block size and I/O queue depth for a single \textit{fio} job on Sys-B. For \texttt{randwrite}, small blocks (4k, 16k) produce low aggregate bandwidth regardless of queue depth---at most 0.70 and 2.24~GiB/s, respectively---while IOPS scales monotonically from 111.4K to 184.3K (4k) and from 90.6K to 147.0K (16k) as \textit{iod} increases from 4 to 256. Large blocks ($\geq$1~MiB) achieve substantially higher bandwidth, peaking near 19~GiB/s at moderate queue depths (18.93~GiB/s for 1~MiB at \textit{iod}=64; 18.74~GiB/s for 2~MiB at \textit{iod}=16; 19.03~GiB/s for 4~MiB at \textit{iod}=8), and remain within a few GiB/s of the peak across a wide range of queue depths. Mean latency grows monotonically with both block size and queue depth, reaching 55.0~ms for 4~MiB at \textit{iod}=256.
+
+For \texttt{seqread}, large-block bandwidth exhibits a striking non-monotonic dependence on queue depth: 1~MiB peaks at \textit{iod}=16 (19.08~GiB/s) and drops sharply at deeper queues (3.28~GiB/s at \textit{iod}=128), while 4~MiB peaks at \textit{iod}=4--8 (16.65--19.45~GiB/s) and collapses to $\approx$3.3~GiB/s at \textit{iod}=32--64. Small-block IOPS again scales monotonically---reaching 104.7K (4k) and 98.0K (16k) at \textit{iod}=128---but bandwidth stays below 1.5~GiB/s. The narrow optimal queue-depth window for large-block sequential reads and the associated latency inflation at high \textit{iod} (4~MiB at \textit{iod}=256 reaches 307.0~ms, more than $5\times$ the corresponding \texttt{randwrite} value) stand in sharp contrast to the smooth, broad saturation plateau observed for writes.
+
+\subsubsection{Single-Node Number of Processes Scaling}
+
+\begin{figure*}[htbp]
+    \centering \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_seqread_nj-bs.pdf}
+    \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_randwrite_nj-bs.pdf}
+    
+    \vspace{-1em}
+    \caption{\textit{fio} single-node bandwidth, IOPS, and mean latency as a function of block size and number of jobs.}
+    \label{fig:fio-single-node-heatmap}
+\end{figure*}
+
+Fig.~\ref{fig:fio-single-node-heatmap} fixes \textit{iod}=16 and sweeps the number of parallel jobs and block size on a single client node on Sys-B. For \texttt{randwrite}, large blocks ($\geq$1~MiB) saturate at $\approx$22--23~GiB/s with as few as 4 jobs---consistent with Sys-B's 200~Gbps (23.3~GiB/s) NIC ceiling---and additional jobs yield no bandwidth gain. Small blocks scale well: 4k bandwidth grows from 2.54~GiB/s at $nj$=4 to 7.07~GiB/s at $nj$=16, with IOPS peaking at 1{,}853K; 16k bandwidth reaches 16.18--16.78~GiB/s at $nj$=32--64. Mean latency for large blocks grows proportionally with $nj$ (4~MiB reaches 180.7~ms at $nj$=64), a predictable consequence of increased queuing pressure without additional throughput.
+
+For \texttt{seqread}, the scaling behavior is markedly different. Large-block aggregate bandwidth is capped at roughly 3.9--5.1~GiB/s across all tested $nj$ values, well below the $\approx$19~GiB/s single-job peak in Fig.~\ref{fig:fio-single-job-heatmap}, indicating that multi-process sequential reads do not benefit from process-level parallelism. In contrast, 4k IOPS scales from 182.7K at $nj$=4 to 768.0K at $nj$=64, showing good parallelism for small-block reads. Mean latency for large blocks escalates sharply: 4~MiB reaches 862.2~ms at $nj$=64, more than $4\times$ the corresponding \texttt{randwrite} value.
 
 \subsubsection{Tail Latency at Fixed Concurrency}
 
