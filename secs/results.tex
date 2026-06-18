@@ -1,5 +1,10 @@
 
 
+
+
+\section{Evaluation Results}
+\subsection{I/O Concurrency}
+
 \begin{figure*}[hbtp]
     \centering \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_seqread.pdf}
     \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_randwrite.pdf}
@@ -8,12 +13,9 @@
     \caption{\textit{fio} single-job bandwidth, IOPS, and mean latency as a function of block size and I/O queue depth.}
     \label{fig:fio-single-job-heatmap}
 \end{figure*}
+\subsubsection{Single-job I/O queue depth scaling}
 
-\section{Evaluation Results}
-\subsection{Performance and Concurrency}
-\subsubsection{fio I/O queue depth scaling}
-
-\subsubsection{fio number of jobs scaling}
+\subsubsection{Single-node number of jobs scaling}
 
 \subsubsection{\textit{fio} tail latency under the same concurrency level}
 
@@ -42,10 +44,10 @@ We evaluate five $nj/iod$ combinations on Sys-B using a \textit{fio} \texttt{ran
 In \textit{fio} reports, latency is further broken down into submission latency ($slat$) and completion latency ($clat$), each reported as minimum, mean, maximum, and percentiles (P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.05~ms across all configurations. However, when the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 48.58--59.08~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases: at $nj = 4$ ($iod=64$), P99.99 reaches 149.95~ms, approximately 27$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable over either extreme.
 
 
-% Notably, all five configurations achieve throughput of 21.5--23.0~GiB/s, utilizing over 80\% of the 200~Gbps NIC bandwidth, confirming that \textit{fio} with the \texttt{dfs} engine can effectively saturate DAOS.
+Notably, the achieved bandwidth across all five configurations exceeds 90\% of the 200~Gbps NIC's capacity, confirming that \textit{fio} with the \texttt{dfs} engine can effectively saturate the single-link throughput.
 
 
-\subsection{\textit{fio} Read/Write Patterns}
+\subsection{Workload Read/Write Pattern}
 
 \begin{figure*}[thbp]
     \centering
@@ -62,9 +64,9 @@ In \textit{fio} reports, latency is further broken down into submission latency 
 
 {\color{blue}
 
-Of the two interception libraries, \texttt{libpil4dfs} corrupts \textit{fio} output and is therefore excluded. We conduct a \texttt{randwrite} workload with $nj{=}16$, $iod{=}16$, and $bs{=}1$\,MiB across the \texttt{dfs}, \texttt{psync}, \texttt{pvsync2}, and \texttt{libaio} engines on Sys-A. Without any interception library, the three POSIX engines yield 13--15\,GiB/s. Preloading \texttt{libioil} raises \texttt{psync} bandwidth from 13.x to 33.x\,GiB/s, while \texttt{pvsync2} and \texttt{libaio} are almost unaffected, consistent with \texttt{libioil} intercepting only synchronous POSIX calls. The native \texttt{dfs} engine achieves the highest bandwidth at 89.5\,GiB/s.
+Of the two interception libraries, \texttt{libpil4dfs} corrupts \textit{fio} output and is therefore excluded. We conduct a \texttt{randwrite} workload with $nj{=}16$, $iod{=}16$, and $bs{=}1$\,MiB across the \texttt{dfs}, \texttt{psync}, \texttt{pvsync2}, and \texttt{libaio} engines on Sys-A. Without any interception library, the three POSIX engines yield 13--15~GiB/s. Preloading \texttt{libioil} raises \texttt{psync} bandwidth from 13.x to 33.x~GiB/s, while \texttt{pvsync2} and \texttt{libaio} are almost unaffected, consistent with \texttt{libioil} intercepting only synchronous POSIX calls. The native \texttt{dfs} engine achieves the highest bandwidth at 89.5~GiB/s.
 
-However, we also observe that CPU utilization reaches 97\% with the \texttt{dfs} engine, while the other engines remain below 30\%. Despite Sys-A's aggregated 1{,}600~Gbps NIC capacity, the \texttt{dfs} engine's 89.5~GiB/s (approximately 769~Gbps) bandwidth suggests the \textit{fio} \texttt{dfs} performance is CPU-bound rather than network-limited.
+However, we also observe that CPU utilization reaches 97\% with the \texttt{dfs} engine, while the other engines remain below 30\%. Despite Sys-A's aggregated 1{,}600~Gbps NIC capacity, the \texttt{dfs} engine's  89.5~GiB/s (approximately 769~Gbps) bandwidth suggests the \textit{fio} \texttt{dfs} performance is CPU-bound rather than network-limited.
 }
 
 \subsubsection{IOR}
