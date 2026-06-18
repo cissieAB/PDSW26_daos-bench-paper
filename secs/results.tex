@@ -40,17 +40,23 @@ For \texttt{seqread}, the scaling behavior is markedly different. Large-block ag
 
 \subsubsection{Tail Latency at Fixed Concurrency}
 
-\begin{figure}[thbp]
+We evaluate five $nj/iod$ combinations on Sys-B using a \textit{fio} \texttt{randwrite} workload, keeping their product fixed at 256, with a block size of 1~MiB, a run time of 60 seconds, and the \texttt{dfs} I/O engine. Across all configurations, the mean bandwidth (21.5--23.0~GiB/s) and mean latency (10.8--11.5~ms) remain consistent, while the maximum latency varies widely from 83.1 to 165.0~ms, as shown in Fig.~\ref{fig:fio-latency}.
+
+In \textit{fio} reports, latency is further broken down into submission latency ($slat$) and completion latency ($clat$), each reported as minimum, mean, maximum, and percentiles (P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.05~ms across all configurations. However, when the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 48.58--59.08~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases: at $nj=4$ ($iod=64$), P99.99 reaches 149.95~ms, approximately 27$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable.
+
+Notably, the achieved bandwidth across all five configurations exceeds 90\% of the 200~Gbps NIC capacity, indicating that the network link rather than the storage stack is the bottleneck on Sys-B.
+
+\begin{figure}[!t]
     \centering
-\includegraphics[width=0.98\linewidth]{figures/fio-latency.pdf}
+    \includegraphics[width=0.98\linewidth]{figures/fio-latency.pdf}
 
     \vspace{-1em}
     \caption{\textit{fio} random-write bandwidth and latency on Sys-B.}
     \label{fig:fio-latency}
 \end{figure}
 
-\begin{figure}[thbp]
-\centering
+\begin{figure}[!t]
+    \centering
     \includegraphics[width=0.98\linewidth]{figures/fio-tail_latency_breakdown.pdf}
 
     \vspace{-1em}
@@ -59,18 +65,15 @@ For \texttt{seqread}, the scaling behavior is markedly different. Large-block ag
 \end{figure}
 
 
-
-We evaluate five $nj/iod$ combinations on Sys-B using a \textit{fio} \texttt{randwrite} workload, keeping their product fixed at 256, with a block size of 1~MiB, a run time of 60 seconds, and the \texttt{dfs} I/O engine. Across all configurations, the mean bandwidth (21.5--23.0~GiB/s) and mean latency (10.8--11.5~ms) remain consistent, while the maximum latency varies widely from 83.1 to 165.0~ms, as shown in Fig.~\ref{fig:fio-latency}.
-
-In \textit{fio} reports, latency is further broken down into submission latency ($slat$) and completion latency ($clat$), each reported as minimum, mean, maximum, and percentiles (P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.05~ms across all configurations. However, when the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 48.58--59.08~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases: at $nj=4$ ($iod=64$), P99.99 reaches 149.95~ms, approximately 27$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable.
-
-
-Notably, the achieved bandwidth across all five configurations exceeds 90\% of the 200~Gbps NIC capacity, indicating that the network link rather than the storage stack is the bottleneck on Sys-B.
-
-
 \subsection{Read/Write Mix}
 
-\begin{figure*}[htbp]
+Fig.~\ref{fig:fio-sysb-all-patterns} shows aggregate bandwidth across the five read/write mixes for two \textit{fio} concurrency configurations ($nj$=32/$iod$=8 and $nj$=16/$iod$=16) on Sys-B, with block sizes from 4~KiB to 4~MiB and both random and sequential access. Bandwidth increases monotonically with write fraction across all block sizes and access patterns. For large blocks ($\geq$1~MiB), write-only bandwidth saturates the 200~Gbps NIC at $\approx$22~GiB/s in both configurations. Read-only bandwidth, by contrast, stays below 5~GiB/s regardless of block size or concurrency setting---an asymmetry that reflects DAOS's log-structured storage engine, which appends writes directly to persistent memory without seek overhead while reads must locate and retrieve object data from the backing store.
+
+DAOS substantially narrows the sequential-versus-random bandwidth gap: for large blocks in write-heavy and write-only mixes, sequential and random access achieve nearly identical bandwidth, in contrast to traditional filesystems where sequential access typically dominates. Small blocks (4k, 16k) remain low throughout all mixes, reaching at most a few GiB/s, reflecting IOPS saturation rather than a read/write asymmetry.
+
+The two concurrency configurations exhibit broadly similar trends. In the write-only case, $nj$=16/$iod$=16 achieves slightly higher bandwidth for 16k blocks ($\approx$19.5~GiB/s vs.\ $\approx$17~GiB/s for $nj$=32/$iod$=8), while large-block performance is nearly identical across both, saturated by the network link in either case.
+
+\begin{figure*}[!t]
 \centering
     \includegraphics[width=0.98\linewidth]{figures/fio-bw-all-pattern-sysb.pdf}
 
@@ -93,7 +96,7 @@ CPU utilization measurements corroborate the throughput trends. The \texttt{dfus
 
 \subsection{DAOS vs.\ NVMe-oF}
 
-\begin{figure*}[thbp]
+\begin{figure*}[!t]
     \centering
     \includegraphics[width=0.98\linewidth]{figures/fio_cmp_bw_iops_cpu.pdf}
     
@@ -102,7 +105,7 @@ CPU utilization measurements corroborate the throughput trends. The \texttt{dfus
     \label{fig:daos-vs-nvmeof-cpu}
 \end{figure*}
 
-\begin{figure*}[thbp]
+\begin{figure*}[!t]
 \centering
     \includegraphics[width=0.98\linewidth]{figures/fio_cmp_latency.pdf}
     
