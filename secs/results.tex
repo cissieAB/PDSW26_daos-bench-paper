@@ -17,14 +17,14 @@
 
 \subsubsection{Single-node number of jobs scaling}
 
-\subsubsection{\textit{fio} tail latency under the same concurrency level}
+\subsubsection{Tail Latency at Fixed Concurrency}
 
 \begin{figure}[thbp]
     \centering
 \includegraphics[width=0.98\linewidth]{figures/fio-latency.pdf}
 
     \vspace{-1em}
-    \caption{The latency and bandwidth of \textit{fio} random-write workloads on Sys-B.}
+    \caption{\textit{fio} random-write bandwidth and latency on Sys-B.}
     \label{fig:fio-latency}
 \end{figure}
 
@@ -47,14 +47,14 @@ In \textit{fio} reports, latency is further broken down into submission latency 
 Notably, the achieved bandwidth across all five configurations exceeds 90\% of the 200~Gbps NIC capacity, indicating that the network link rather than the storage stack is the bottleneck on Sys-B.
 
 
-\subsection{Workload Read/Write Pattern}
+\subsection{Read/Write Mix}
 
 \begin{figure*}[htbp]
 \centering
     \includegraphics[width=0.98\linewidth]{figures/fio-bw-all-pattern-sysb.pdf}
 
     \vspace{-1em}
-    \caption{Achieved \textit{fio} bandwidth on Sys-B.}
+    \caption{\textit{fio} bandwidth across read/write mixes and access patterns on Sys-B.}
     \label{fig:fio-sysb-all-patterns}
 \end{figure*}
 
@@ -63,14 +63,14 @@ Notably, the achieved bandwidth across all five configurations exceeds 90\% of t
 \subsubsection{\textit{fio}}
 
 
-Of the two interception libraries, \texttt{libpil4dfs} causes data corruption in \textit{fio} and is therefore excluded. We run a \texttt{randwrite} workload with $nj{=}16$, $iod{=}16$, and $bs{=}1$\,MiB across the \texttt{dfs}, \texttt{psync}, \texttt{pvsync2}, and \texttt{libaio} I/O engines on Sys-A, repeating each configuration 10~times and reporting the median. Via \texttt{dfuse} without any interception library, the synchronous engines \texttt{psync} and \texttt{pvsync2} (each with an effective $iod$ of~1) deliver 39.4\,GiB/s each, while \texttt{libaio} reaches 29.0\,GiB/s. Preloading \texttt{libioil} reduces bandwidth across all three: \texttt{psync} falls to 19.6\,GiB/s, \texttt{pvsync2} to 12.2\,GiB/s, and \texttt{libaio} to 11.1\,GiB/s, indicating that \texttt{libioil} adds overhead rather than benefit at this block size. The native \texttt{dfs} engine achieves the highest bandwidth at 88.1\,GiB/s, outperforming other configurations by 2.2--8 times.
+Of the two interception libraries, \texttt{libpil4dfs} causes data corruption in \textit{fio} and is therefore excluded. We run a \texttt{randwrite} workload with $nj{=}16$, $iod{=}16$, and $bs{=}1$\,MiB across the \texttt{dfs}, \texttt{psync}, \texttt{pvsync2}, and \texttt{libaio} I/O engines on Sys-A, repeating each configuration 10~times and reporting the median. Via \texttt{dfuse} without any interception library, the synchronous engines \texttt{psync} and \texttt{pvsync2} (each with an effective $iod$ of~1) deliver 39.4\,GiB/s each, while \texttt{libaio} reaches 29.0\,GiB/s. Preloading \texttt{libioil} reduces bandwidth across all three: \texttt{psync} falls to 19.6\,GiB/s, \texttt{pvsync2} to 12.2\,GiB/s, and \texttt{libaio} to 11.1\,GiB/s. The native \texttt{dfs} engine achieves the highest bandwidth at 88.1\,GiB/s, outperforming other configurations by 2.2--8 times.
 
 CPU utilization measurements corroborate the throughput trends. The \texttt{dfuse} engines without \texttt{libioil} and the \texttt{dfs} engine all drive the client CPU above 90\% (99\% and 93\%, respectively). The outlier is \texttt{libioil}/\texttt{libaio}, which consumes only 18\% CPU while yielding just 11.1\,GiB/s, suggesting that the asynchronous I/O queue incurs substantial overhead through the interception layer. Although \texttt{dfs} achieves 88.1\,GiB/s (756\,Gbps), this represents 47\% of Sys-A's aggregated 1{,}600\,Gbps NIC capacity, indicating that \textit{fio} \texttt{dfs} throughput is CPU-bound rather than network-limited.
 
 
 \subsubsection{IOR}
 
-\subsection{DAOS vs NVMe-oF}
+\subsection{DAOS vs.\ NVMe-oF}
 
 \begin{figure*}[thbp]
     \centering

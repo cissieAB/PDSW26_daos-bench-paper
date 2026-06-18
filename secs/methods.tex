@@ -19,45 +19,43 @@ Table~\ref{tab:platform-cmp} summarizes the key characteristics of both systems.
 
 \subsection{DAOS Benchmark Configurations}
 
-\subsubsection{I/O concurrency}
+\subsubsection{I/O Concurrency}
 
 In a scientific streaming system such as E2SAR \cite{e2sar-github}, multiple data streams are produced and consumed simultaneously across a network of nodes, placing high concurrent I/O demand on the storage backend. We study two dimensions of this concurrency: intra-node concurrency, where a single client node issues multiple parallel I/O requests using \textit{fio}; and inter-node horizontal scaling, where multiple client nodes access DAOS simultaneously, evaluated with IOR.
 
-The \textit{fio} job concurrency is controlled by two parameters: the number of jobs (denoted $nj$), where each job is an independent worker thread that issues I/O requests, and the I/O queue depth (denoted $iod$), which specifies how many I/O requests each job can have in flight simultaneously. Their product $nj \times iod$ therefore determines the overall concurrency level. In addition, the \textit{fio} parameter block size (denoted $bs$) substantially influences both throughput and latency. We systematically vary these parameters across three experiment designs:
+The \textit{fio} job concurrency is controlled by two parameters: the number of jobs (denoted $nj$), where each runs as a separate process that issues I/O requests, and the I/O queue depth (denoted $iod$), which specifies how many I/O requests each process can have in flight simultaneously. Their product $nj \times iod$ therefore determines the overall concurrency level. In addition, the \textit{fio} parameter block size (denoted $bs$) substantially influences both throughput and latency. We systematically vary these parameters across three experiment designs:
 
 \begin{enumerate}[label=(\alph*)]
-    \item Single-job, sweep $bs$ and $iod$. The tested block sizes are 4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB, corresponding to the NVMe sector size, {\color{blue} a typical sub-chunk I/O unit}, the DAOS POSIX container chunk size, the huge page size, and bulk transfers, respectively.
-    \item Fix $iod$, sweep $nj$ and $bs$. This isolates the combined effect of job-level parallelism and block size.
-    \item Fix total concurrency ($nj \times iod$) and  $bs$, sweep the $nj/iod$ split. This quantifies how concurrency structure affects tail latency at similar throughput.
+    \item Single-process, sweep $bs$ and $iod$. The tested block sizes are 4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB, corresponding to the NVMe sector size, {\color{blue} a typical sub-chunk I/O unit}, the DAOS POSIX container chunk size, the huge page size, and bulk transfers, respectively.
+    \item Fix $iod$, sweep $nj$ and $bs$. This isolates the combined effect of process-level parallelism and block size.
+    \item Fix total concurrency ($nj \times iod$) and $bs$, sweep the $nj/iod$ split. This quantifies how concurrency structure affects tail latency at similar throughput.
 \end{enumerate}
 
 
 
-\subsubsection{Workload read/write pattern}
+\subsubsection{Read/Write Mix}
 
-In traditional filesystems, sequential access significantly outperforms random. DAOS, in contrast, narrows this gap through its log-structured storage engine and byte-addressable object store. 
-
-To investigate this effect, we test \textit{fio} under five read/write mixes: (1) read-only; (2) read-heavy (20\% write); (3) read-balanced (50\% write); (4) write-heavy (80\% write); and (5) write-only, each mix with both random and sequential access. We use the \texttt{dfs} I/O engine with block sizes ranging from 4~KiB to 4~MiB.
+In traditional filesystems, sequential access significantly outperforms random. DAOS, in contrast, narrows this gap through its log-structured storage engine and byte-addressable object store. To investigate this effect, we test \textit{fio} under five read/write mixes: (1) read-only; (2) read-heavy (20\% write); (3) read-balanced (50\% write); (4) write-heavy (80\% write); and (5) write-only, each mix with both random and sequential access. We use the \texttt{dfs} I/O engine with block sizes ranging from 4~KiB to 4~MiB.
 
 The five mixes also mirror the distinct stages of a scientific streaming workflow: write-only and write-heavy configurations correspond to data ingestion phases where detectors or simulations produce data at a high rate; balanced and read-heavy configurations represent concurrent online analysis, where processed and raw data coexist; and read-only configurations reflect post-processing or visualization stages that consume previously stored data.
 
 
-\subsubsection{DAOS POSIX container access approaches}
+\subsubsection{DAOS POSIX Container Access Approaches}
 
 Mounting a DAOS POSIX container via \textit{dfuse} is the most portable approach, allowing unmodified POSIX applications to access DAOS through standard filesystem interfaces. However, it incurs overhead on every operation. To quantify this overhead, we evaluate \textit{fio} and IOR with three POSIX container access approaches on Sys-A:
 
 \begin{enumerate}[label=(\alph*)]
 
-\item \textbf{dfuse}: Mount the DAOS POSIX container via \textit{dfuse} and access it through \textit{fio}/IOR's POSIX engine.
+\item dfuse: Mount the DAOS POSIX container via \textit{dfuse} and access it through \textit{fio}/IOR's POSIX engine.
 
-\item \textbf{dfuse + IL}: Same as (a), but with DAOS interception library (IL) \texttt{libioil} or \texttt{libpil4dfs} preloaded.
+\item dfuse + IL: Same as (a), but with DAOS interception library (IL) \texttt{libioil} or \texttt{libpil4dfs} preloaded.
 
-\item \textbf{dfs}: Use \textit{fio} or IOR's native \texttt{dfs} engine, bypassing \textit{dfuse} and POSIX filesystem entirely.
+\item dfs: Use \textit{fio} or IOR's native \texttt{dfs} engine, bypassing \textit{dfuse} and POSIX filesystem entirely.
 
 \end{enumerate}
 
 
-\subsubsection{HPC node locations}
+\subsubsection{HPC Node Locations}
 
 \subsection{DAOS vs.\ Other Storage Systems}
 
