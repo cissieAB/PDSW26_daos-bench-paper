@@ -6,7 +6,7 @@
 \input{tables/platform-spec.tex}
 
 \subsubsection{Aurora}
-Aurora is Argonne National Laboratory's exascale supercomputer with over 10,000 compute nodes \cite{aurora-intro2025}. Aurora currently has the largest DAOS deployment in production, comprising 1,024 storage nodes \cite{aurora-daos-slingshot-rpc2025cug, io500-ics26}. We were allocated a 100~TB DAOS pool under the \texttt{daos\_user} group. Per the Aurora user guide \cite{daos-aurora-guide} and our system queries, this group spans 128\footnote{Only 126--127 nodes were active during the experiments. } storage nodes, each with sixteen PMem devices and two 200Gbps Slingshot-11 Ethernet NICs.
+Aurora is Argonne National Laboratory's exascale supercomputer with over 10,000 compute nodes \cite{aurora-intro2025}. Aurora currently has the largest DAOS deployment in production, comprising 1,024 storage nodes \cite{aurora-daos-slingshot-rpc2025cug, io500-ics26}. We were allocated a 100~TB DAOS pool under the \texttt{daos\_user} group. Per the Aurora user guide \cite{daos-aurora-guide} and our system queries, this group spans 128\footnote{Only 126--127 nodes were active during the experiments. } storage nodes, each with 16 PMem devices and 2 200~Gbps Slingshot-11 Ethernet NICs.
 
 {\color{blue}
 The Aurora supercomputer nodes are interconnected via a large-scale Dragonfly network \cite{aurora-intro2025, daos-aurora-guide}. The 1,024 DAOS server nodes in 64 racks are organized into 8 Dragonfly groups, while compute/client nodes are distributed across 166 Dragonfly groups. This topology enables efficient communication between arbitrary client-server pairs, yet still incurs non-negligible latency due to multi-hop routing. This accounts for the lower bandwidth observed in our experiments compared to \cite{DAOS-aurora-20-node-test2024scw}, which used the same node specifications but a much simpler network topology.
@@ -15,7 +15,7 @@ The Aurora supercomputer nodes are interconnected via a large-scale Dragonfly ne
 \subsubsection{Our Testbed}
 We operate a DAOS testbed comprising 3 storage nodes. Unlike Aurora, this testbed uses DRAM as the first-tier storage and InfiniBand as the interconnect. A single DAOS client node accesses it via a 200~Gbps (23.3 GiB/s) link. The server and client nodes are connected to the same InfiniBand switch, ensuring low-latency RDMA access.
 
-Table~\ref{tab:platform-cmp} summarizes the key characteristics of both systems. For simplicity, we refer to the two platforms as Sys-A and Sys-B in the rest of the paper.
+Table~\ref{tab:platform-cmp} summarizes the key specifications of both systems. For simplicity, we refer to the two platforms as Sys-A and Sys-B in the rest of the paper.
 
 \subsection{DAOS Benchmark Configurations}
 
@@ -23,7 +23,7 @@ Table~\ref{tab:platform-cmp} summarizes the key characteristics of both systems.
 
 In a scientific streaming system such as E2SAR \cite{e2sar-github}, multiple data streams are produced and consumed simultaneously across a network of nodes, placing high concurrent I/O demand on the storage backend. We study two dimensions of this concurrency: intra-node concurrency, where a single client node issues multiple parallel I/O requests using \textit{fio}; and inter-node horizontal scaling, where multiple client nodes access DAOS simultaneously, evaluated with IOR.
 
-The \textit{fio} job concurrency is controlled by two parameters: the number of jobs (denoted $nj$), where each job runs as a separate process that issues I/O requests, and the I/O queue depth (denoted $iod$), which specifies how many I/O requests each process can have in flight simultaneously. Their product $nj \times iod$ therefore determines the overall concurrency level. In addition, the \textit{fio} parameter block size (denoted $bs$) substantially influences both throughput and latency. We systematically vary these parameters across three experiment designs:
+The \textit{fio} job concurrency is controlled by two parameters: the number of jobs (denoted $nj$), where each job runs as a separate process that issues I/O requests, and the I/O queue depth (denoted $iod$), which specifies how many I/O requests each process can have in flight simultaneously. Their product $nj \times iod$ therefore determines the overall concurrency level. In addition, the \textit{fio} parameter block size (denoted $bs$), i.e., the size of each individual I/O request, substantially influences both throughput and latency. We systematically vary these parameters across three experiment designs:
 
 \begin{enumerate}[label=(\alph*)]
     \item Single-process, sweep $bs$ and $iod$. The tested block sizes are 4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB, corresponding to the NVMe sector size, {\color{blue} a typical sub-chunk I/O unit}, the DAOS POSIX container chunk size, the huge page size, and bulk transfers, respectively.
@@ -31,7 +31,9 @@ The \textit{fio} job concurrency is controlled by two parameters: the number of 
     \item Fix total concurrency ($nj \times iod$) and $bs$, sweep the $nj/iod$ split. This quantifies how concurrency structure affects tail latency at similar throughput.
 \end{enumerate}
 
-
+{\color{blue}
+IOR
+}
 
 \subsubsection{Read/Write Mix}
 
