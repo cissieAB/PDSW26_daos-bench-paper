@@ -61,4 +61,6 @@ Mounting a DAOS POSIX container via \textit{dfuse} is the most portable approach
 
 \subsection{DAOS vs.\ Other Storage Systems}
 
-The client node of Sys-B also has access to a remote NVMe-based storage node exported read-only via NFSv4.2 over TCP/IP on a 100~Gbps Ethernet fabric. Comparing the two systems quantifies the performance gap between a conventional file-sharing stack and a modern object store with native RDMA transport. We copy a 28~GiB file from the NFS-mounted volume to a DAOS POSIX container and measure sequential read throughput to both storage systems with \textit{fio}. To avoid confounding the comparison with the peak-bandwidth difference between the 100~Gbps Ethernet and 200~Gbps InfiniBand fabrics, we restrict the test to a single process, keeping achieved throughput well below the theoretical peak of either fabric.
+The client node of Sys-B also has access to a remote NVMe-based storage node exported read-only via NFSv4.2 over TCP/IP on a 100~Gbps Ethernet fabric. Comparing the two systems quantifies the performance gap between a conventional file-sharing stack and a modern object store with native RDMA transport. 
+
+We copy a 28~GiB file from the NFS-mounted volume to a DAOS POSIX container and measure sequential read throughput to both storage systems with \textit{fio}. To avoid confounding the comparison with the peak-bandwidth difference between the 100~Gbps Ethernet and 200~Gbps InfiniBand fabrics, we restrict the test to a single process, keeping achieved throughput well below the theoretical peak of either fabric.
