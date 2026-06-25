@@ -15,7 +15,7 @@ The Aurora supercomputer nodes are interconnected via a large-scale Dragonfly ne
 \subsubsection{Our Testbed}
 We operate a DAOS testbed comprising 3 storage nodes. Unlike Aurora, this testbed uses DRAM as the first-tier storage and InfiniBand as the interconnect. A single DAOS client node accesses it via a 200~Gbps (23.3 GiB/s) link. The server and client nodes are connected to the same InfiniBand switch, ensuring low-latency RDMA access.
 
-Table~\ref{tab:platform-cmp} summarizes the key specifications of both systems. For simplicity, we refer to the two platforms as Sys-A and Sys-B in the rest of the paper.
+Table~\ref{tab:platform-cmp} summarizes the key specifications of both systems. For simplicity, we refer to the two platforms as Sys-A and Sys-B in the rest of the paper. Both systems use DAOS v2.6.
 
 \subsection{DAOS Benchmark Configurations}
 
@@ -31,9 +31,7 @@ The \textit{fio} job concurrency is controlled by two parameters: the number of 
     \item Fix total concurrency ($nj \times iod$) and $bs$, sweep the $nj/iod$ split. This quantifies how concurrency structure affects tail latency at similar throughput.
 \end{enumerate}
 
-{\color{blue}
-IOR
-}
+\texttt{ior} achieves parallelism through distributed MPI processes, where each process independently issues I/O requests of a configurable transfer size. We vary the number of DAOS client nodes and MPI processes per node (PPN) and measure their aggregated read/write bandwidth. Peak throughput is of primary interest, as it bounds the maximum sustainable data rate a streaming system can deliver to or retrieve from the storage backend.
 
 \subsubsection{Read/Write Mix}
 
