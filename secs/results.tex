@@ -13,14 +13,14 @@ Fig.~\ref{fig:fio-single-job-heatmap} sweeps block size and I/O queue depth for 
 
 For \texttt{seqread}, large-block bandwidth exhibits a striking non-monotonic dependence on queue depth: 1~MiB peaks at \textit{iod}=16 (19.08~GiB/s) and drops sharply at deeper queues (3.28~GiB/s at \textit{iod}=128), while 4~MiB peaks at \textit{iod}=4--8 (16.65--19.45~GiB/s) and collapses to $\approx$3.3~GiB/s at \textit{iod}=32--64. Small-block IOPS again scales monotonically---reaching 104.7K (4k) and 98.0K (16k) at \textit{iod}=128---but bandwidth stays below 1.5~GiB/s. The narrow optimal queue-depth window for large-block sequential reads and the associated latency inflation at high \textit{iod} (4~MiB at \textit{iod}=256 reaches 307.0~ms, more than $5\times$ the corresponding \texttt{randwrite} value) stand in sharp contrast to the smooth, broad saturation plateau observed for writes.
 
-\begin{figure*}[!t]
-    \centering \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_seqread_iod-bs.pdf}
-    \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_randwrite_iod-bs.pdf}
+% \begin{figure*}[!t]
+%     \centering \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_seqread_iod-bs.pdf}
+%     \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_randwrite_iod-bs.pdf}
 
-    \vspace{-1em}
-    \caption{\textit{fio} single-job bandwidth, IOPS, and mean latency as a function of block size and I/O queue depth.}
-    \label{fig:fio-single-job-heatmap}
-\end{figure*}
+%     \vspace{-1em}
+%     \caption{\textit{fio} single-job bandwidth, IOPS, and mean latency as a function of block size and I/O queue depth.}
+%     \label{fig:fio-single-job-heatmap}
+% \end{figure*}
 
 \subsubsection{Single-Node Number of Processes Scaling}
 
@@ -30,14 +30,14 @@ Fig.~\ref{fig:fio-single-node-heatmap} fixes \textit{iod}=16 and sweeps the numb
 
 For \texttt{seqread}, the scaling behavior is markedly different. Large-block aggregate bandwidth is capped at roughly 3.9--5.1~GiB/s across all tested $nj$ values, well below the $\approx$19~GiB/s single-job peak in Fig.~\ref{fig:fio-single-job-heatmap}, indicating that multi-process sequential reads do not benefit from process-level parallelism. In contrast, 4k IOPS scales from 182.7K at $nj$=4 to 768.0K at $nj$=64, showing good parallelism for small-block reads. Mean latency for large blocks escalates sharply: 4~MiB reaches 862.2~ms at $nj$=64, more than $4\times$ the corresponding \texttt{randwrite} value.
 
-\begin{figure*}[!t]
-    \centering \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_seqread_nj-bs.pdf}
-    \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_randwrite_nj-bs.pdf}
+% \begin{figure*}[!t]
+%     \centering \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_seqread_nj-bs.pdf}
+%     \includegraphics[width=0.98\linewidth]{figures/fio-heatmap_randwrite_nj-bs.pdf}
 
-    \vspace{-1em}
-    \caption{\textit{fio} single-node bandwidth, IOPS, and mean latency as a function of block size and number of jobs.}
-    \label{fig:fio-single-node-heatmap}
-\end{figure*}
+%     \vspace{-1em}
+%     \caption{\textit{fio} single-node bandwidth, IOPS, and mean latency as a function of block size and number of jobs.}
+%     \label{fig:fio-single-node-heatmap}
+% \end{figure*}
 
 }
 
@@ -59,6 +59,16 @@ Notably, the achieved bandwidth across all five configurations exceeds 90\% of t
     \label{fig:fio-tail-latency-breakdown}
 \end{figure}
 
+\subsubsection{Multi-Node Scaling}
+
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=0.98\linewidth]{figures/ior-bw.pdf}
+
+    \vspace{-1em}
+    \caption{Tail latency breakdown of \textit{fio} random-write workloads on Sys-B.}
+    \label{fig:ior-bw}
+\end{figure}
 
 \subsection{Read/Write Mix}
 {\color{blue}
