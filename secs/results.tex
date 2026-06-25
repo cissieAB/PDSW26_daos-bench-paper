@@ -63,7 +63,7 @@ As Fig.~\ref{fig:ior-scaling}(a) shows, the node-scaling behavior of read and wr
 
 
 
-\FloatBarrier
+
 \subsection{Read/Write Mix}
 
 \begin{figure*}[!t]
@@ -82,12 +82,12 @@ Fig.~\ref{fig:fio-sysb-all-patterns} shows aggregate bandwidth across the five r
 }
 
 
-\FloatBarrier
+ 
 \subsection{DAOS POSIX Container Access Approaches}
 
 We compare throughput for the same I/O workload across different DAOS POSIX container access approaches on Sys-A. The containers on Sys-A have a default redundancy factor ($rd\_fac$) of 3. We set $rd\_fac = 0$ in all experiments to maximize throughput.
 
-\FloatBarrier
+ 
 \subsubsection{\textit{fio}}
 
 Of the two interception libraries, \texttt{libpil4dfs} causes data corruption in \textit{fio} and is therefore excluded. We run a \texttt{randwrite} workload with $nj{=}16$, $iod{=}16$ and $bs{=}1$\,MiB across the \texttt{dfs}, \texttt{pvsync2}, and \texttt{libaio} I/O engines, repeating each configuration 10~times and reporting the median values. Via \texttt{dfuse} without any interception library, the synchronous engine \texttt{pvsync2} (with an effective $iod$ of~1) delivers 39.4\,GiB/s, while \texttt{libaio} reaches 29.0\,GiB/s. Preloading \texttt{libioil} reduces bandwidth for both engines: \texttt{pvsync2} to 12.2\,GiB/s and \texttt{libaio} to 11.1\,GiB/s. The native \texttt{dfs} engine achieves the highest median bandwidth at 88.1\,GiB/s, outperforming other configurations by 2.2--8 times.
@@ -95,10 +95,10 @@ Of the two interception libraries, \texttt{libpil4dfs} causes data corruption in
 CPU utilization measurements corroborate the throughput trends. The \texttt{dfuse} engines without \texttt{libioil} and the \texttt{dfs} engine all drive the client CPU above 90\% (99\% and 93\%, respectively). The outlier is \texttt{libioil}+\texttt{libaio}, which consumes only 18\% CPU while yielding just 11.1\,GiB/s, suggesting that the asynchronous I/O queue incurs substantial overhead through the interception layer. Although \texttt{dfs} achieves 88.1\,GiB/s, this only represents 47\% of Sys-A's aggregated 1{,}600\,Gbps NIC capacity, and 68\% of the single-node \texttt{ior} peak write bandwidth, indicating that \textit{fio} \texttt{dfs} throughput is CPU-bound rather than network-limited on this platform.
 
 
-\FloatBarrier
+ 
 \subsubsection{IOR}
 
-\FloatBarrier
+ 
 \subsection{DAOS vs.\ NFS}
 
 
