@@ -48,7 +48,7 @@ For a single node, xfer=16~MiB yields peak write of 128.7 GiB/s (PPN=48, about 6
     \label{fig:ior-scaling}
 \end{figure}
 
-As Fig.~\ref{fig:ior-scaling}-(a) shows, the node-scaling behavior of read and write differs. Read at both transfer sizes grows monotonically with the number of client nodes, while write slows from 16 to 32 nodes. xfer=16~MiB yields higher write throughput across all node counts, but for read, xfer=2~MiB outperforms xfer=16~MiB at 4--32 nodes. Fig.~\ref{fig:ior-scaling}-(b) shows that the optimal PPN also differs by transfer size and access type. For xfer=2~MiB, both read and write benefit from higher PPN up to PPN=32. For xfer=16~MiB, write bandwidth increases monotonically with PPN, whereas read peaks at PPN=16 and degrades sharply at PPN$\geq$32. Overall, write throughput consistently favors larger transfer sizes and higher PPN, whereas read throughput at scale requires careful co-tuning of transfer size and PPN to avoid degradation.
+As Fig.~\ref{fig:ior-scaling}(a) shows, the node-scaling behavior of read and write differs. Read at both transfer sizes grows monotonically with the number of client nodes, while write slows from 16 to 32 nodes. xfer=16~MiB yields higher write throughput across all node counts, but for read, xfer=2~MiB outperforms xfer=16~MiB at 4--32 nodes. Fig.~\ref{fig:ior-scaling}(b) shows that the optimal PPN also differs by transfer size and access type. For xfer=2~MiB, both read and write benefit from higher PPN up to PPN=32. For xfer=16~MiB, write bandwidth increases monotonically with PPN, whereas read peaks at PPN=16 and degrades sharply at PPN$\geq$32. Overall, write throughput consistently favors larger transfer sizes and higher PPN, whereas read throughput at scale requires careful co-tuning of transfer size and PPN to avoid degradation.
 
 
 
@@ -73,7 +73,7 @@ Fig.~\ref{fig:fio-sysb-all-patterns} shows aggregate bandwidth across the five r
 
 \subsection{DAOS POSIX Container Access Approaches}
 
-We compare the throughput of the same I/O workload with different DAOS container access approaches on Sys-A. By default, the redundancy factor ($rd\_fac$) of the DAOS POSIX containers created on Sys-A is set to 3. For higher throughput, we purposely reset $rd\_fac$ to 0.
+We compare throughput for the same I/O workload across different DAOS POSIX container access approaches on Sys-A. The containers on Sys-A have a default redundancy factor ($rd\_fac$) of 3. We set $rd\_fac = 0$ in all experiments to maximize throughput.
 
 \subsubsection{\textit{fio}}
 
