@@ -5,8 +5,17 @@
 
 \subsubsection{Single-Process I/O Queue Depth Scaling}
 
-We run the \textit{fio} \texttt{randwrite} workload for single-process queue depth scaling on Sys-B.
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=1\linewidth]{figures/fio-randwrite_bs-iod_median-bw.pdf}
 
+    \vspace{-1em}
+    \caption{Bandwidth of \textit{fio} \texttt{randwrite} on Sys-B.}
+    \label{fig:fio-sweep-bs_iod}
+\end{figure}
+
+
+Fig.~\ref{fig:fio-sweep-bs_iod} shows the \textcolor{blue}{10-run} median bandwidth of the \textit{fio} \texttt{randwrite} workload across varying block sizes and queue depths on Sys-B. Block size is the dominant factor: the two small block sizes (4~KiB and 16~KiB) yield persistently low bandwidth of 0.41--0.69~GiB/s and 1.19--2.25~GiB/s, respectively, saturating at $iod{\geq}32$. The large block sizes (1~MiB, 2~MiB, and 4~MiB) rise sharply from $iod{=}4$ to $iod{=}8$ and plateau at 16--20~GiB/s for $iod{\geq}16$, more than an order of magnitude above the small-block regime. These saturation patterns indicate that a single-process \textit{fio} job is IOPS-bounded regardless of block size. Run-to-run variability, quantified by the coefficient of variation (CV\% = standard deviation / mean $\times$ 100\%), remains within 8.2\% across all configurations, indicating consistent write performance.
 
 
 \subsubsection{Single-Node Number of Processes Scaling}
@@ -14,9 +23,10 @@ We run the \textit{fio} \texttt{randwrite} workload for single-process queue dep
 
 
 
+
 \subsubsection{Tail Latency at Fixed Concurrency}
 
-\begin{figure}[htbp]
+\begin{figure}[!t]
     \centering
     \includegraphics[width=1\linewidth]{figures/fio-tail_latency_breakdown.pdf}
 
@@ -39,7 +49,7 @@ Notably, the achieved bandwidth across all five configurations exceeds 90\% of t
 
 For a single node, xfer=16~MiB yields peak write of 128.7 GiB/s (PPN=48, about 69\% of the per-node NIC limit) and peak read of 59.6 GiB/s (PPN=8); xfer=2~MiB yields peak write of 101.9 GiB/s (PPN=48) and peak read of 49.7 GiB/s (PPN=32). Scaling to 32 nodes, write bandwidth peaks at 2,168.4 GiB/s (PPN=48, xfer=16~MiB) and read peaks at 2,095.9 GiB/s (PPN=32, xfer=2~MiB), both exceeding 2~TiB/s and demonstrating that Sys-A sustains multi-TiB/s throughput under high client concurrency.
 
-\begin{figure}[htbp]
+\begin{figure}[!t]
     \centering
     \includegraphics[width=1\linewidth]{figures/ior-scaling-node-ppn.pdf}
 
@@ -53,9 +63,10 @@ As Fig.~\ref{fig:ior-scaling}(a) shows, the node-scaling behavior of read and wr
 
 
 
+\FloatBarrier
 \subsection{Read/Write Mix}
 
-\begin{figure*}[thbp]
+\begin{figure*}[!t]
 \centering
     \includegraphics[width=1\linewidth]{figures/fio-bw-all-pattern-sysb.pdf}
 
@@ -71,10 +82,12 @@ Fig.~\ref{fig:fio-sysb-all-patterns} shows aggregate bandwidth across the five r
 }
 
 
+\FloatBarrier
 \subsection{DAOS POSIX Container Access Approaches}
 
 We compare throughput for the same I/O workload across different DAOS POSIX container access approaches on Sys-A. The containers on Sys-A have a default redundancy factor ($rd\_fac$) of 3. We set $rd\_fac = 0$ in all experiments to maximize throughput.
 
+\FloatBarrier
 \subsubsection{\textit{fio}}
 
 Of the two interception libraries, \texttt{libpil4dfs} causes data corruption in \textit{fio} and is therefore excluded. We run a \texttt{randwrite} workload with $nj{=}16$, $iod{=}16$ and $bs{=}1$\,MiB across the \texttt{dfs}, \texttt{pvsync2}, and \texttt{libaio} I/O engines, repeating each configuration 10~times and reporting the median values. Via \texttt{dfuse} without any interception library, the synchronous engine \texttt{pvsync2} (with an effective $iod$ of~1) delivers 39.4\,GiB/s, while \texttt{libaio} reaches 29.0\,GiB/s. Preloading \texttt{libioil} reduces bandwidth for both engines: \texttt{pvsync2} to 12.2\,GiB/s and \texttt{libaio} to 11.1\,GiB/s. The native \texttt{dfs} engine achieves the highest median bandwidth at 88.1\,GiB/s, outperforming other configurations by 2.2--8 times.
@@ -82,12 +95,14 @@ Of the two interception libraries, \texttt{libpil4dfs} causes data corruption in
 CPU utilization measurements corroborate the throughput trends. The \texttt{dfuse} engines without \texttt{libioil} and the \texttt{dfs} engine all drive the client CPU above 90\% (99\% and 93\%, respectively). The outlier is \texttt{libioil}+\texttt{libaio}, which consumes only 18\% CPU while yielding just 11.1\,GiB/s, suggesting that the asynchronous I/O queue incurs substantial overhead through the interception layer. Although \texttt{dfs} achieves 88.1\,GiB/s, this only represents 47\% of Sys-A's aggregated 1{,}600\,Gbps NIC capacity, and 68\% of the single-node \texttt{ior} peak write bandwidth, indicating that \textit{fio} \texttt{dfs} throughput is CPU-bound rather than network-limited on this platform.
 
 
+\FloatBarrier
 \subsubsection{IOR}
 
+\FloatBarrier
 \subsection{DAOS vs.\ NFS}
 
 
-\begin{figure*}[thbp]
+\begin{figure*}[!t]
     \centering
     \includegraphics[width=1\linewidth]{figures/fio-cmp_bw-meanlat-cpu.pdf}
 
