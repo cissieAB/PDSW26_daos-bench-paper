@@ -16,7 +16,7 @@ We run the \textit{fio} \texttt{randwrite} workload for single-process queue dep
 
 \subsubsection{Tail Latency at Fixed Concurrency}
 
-\begin{figure}[thbp]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=1\linewidth]{figures/fio-tail_latency_breakdown.pdf}
 
@@ -30,12 +30,16 @@ We evaluate five $nj/iod$ combinations on Sys-B using a \textit{fio} \texttt{ran
 
 In \textit{fio} reports, latency is further broken down into submission latency ($slat$) and completion latency ($clat$), each reported as minimum, mean, maximum, and percentiles (P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.05~ms across all configurations. However, when the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 48.58--59.08~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases: at $nj=4$ ($iod=64$), P99.99 reaches 149.95~ms, approximately 27$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable.
 
-Notably, the achieved bandwidth across all five configurations exceeds 90\% of the 200~Gbps NIC limit, indicating that on Sys-B the network link rather than the storage stack is the bottleneck.
+Notably, the achieved bandwidth across all five configurations exceeds 90\% of the 200~Gbps NIC limit, indicating that NIC is the bottleneck for this client node.
 
 
 \subsubsection{Multi-Node Scaling}
 
-\begin{figure}[thbp]
+
+
+For a single node, xfer=16~MiB yields peak write of 128.7 GiB/s (PPN=48, about 69\% of the per-node NIC limit) and peak read of 59.6 GiB/s (PPN=8); xfer=2~MiB yields peak write of 101.9 GiB/s (PPN=48) and peak read of 49.7 GiB/s (PPN=32). Scaling to 32 nodes, write bandwidth peaks at 2,168.4 GiB/s (PPN=48, xfer=16~MiB) and read peaks at 2,095.9 GiB/s (PPN=32, xfer=2~MiB), both exceeding 2~TiB/s and demonstrating that Sys-A sustains multi-TiB/s throughput under high client concurrency.
+
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=1\linewidth]{figures/ior-scaling-node-ppn.pdf}
 
@@ -44,39 +48,43 @@ Notably, the achieved bandwidth across all five configurations exceeds 90\% of t
     \label{fig:ior-scaling}
 \end{figure}
 
-For a single node, xfer=16~MiB yields peak write of 128.7 GiB/s (PPN=48, about 69\% of the per-node NIC limit) and peak read of 59.6 GiB/s (PPN=8); xfer=2~MiB yields peak write of 101.9 GiB/s (PPN=48) and peak read of 49.7 GiB/s (PPN=32). Scaling to 32 nodes, write bandwidth peaks at 2,168.4 GiB/s (PPN=48, xfer=16~MiB) and read peaks at 2,095.9 GiB/s (PPN=32, xfer=2~MiB), both exceeding 2~TiB/s and demonstrating that Sys-A sustains multi-TiB/s throughput under high client concurrency.
-
 As Fig.~\ref{fig:ior-scaling}-(a) shows, the node-scaling behavior of read and write differs. Read at both transfer sizes grows monotonically with the number of client nodes, while write slows from 16 to 32 nodes. xfer=16~MiB yields higher write throughput across all node counts, but for read, xfer=2~MiB outperforms xfer=16~MiB at 4--32 nodes. Fig.~\ref{fig:ior-scaling}-(b) shows that the optimal PPN also differs by transfer size and access type. For xfer=2~MiB, both read and write benefit from higher PPN up to PPN=32. For xfer=16~MiB, write bandwidth increases monotonically with PPN, whereas read peaks at PPN=16 and degrades sharply at PPN$\geq$32. Overall, write throughput consistently favors larger transfer sizes and higher PPN, whereas read throughput at scale requires careful co-tuning of transfer size and PPN to avoid degradation.
 
 
-\subsection{Read/Write Mix}
 
-Fig.~\ref{fig:fio-sysb-all-patterns} shows aggregate bandwidth across the five read/write mixes for two \textit{fio} concurrency configurations ($nj$=32/$iod$=8 and $nj$=16/$iod$=16) on Sys-B, with block sizes from 4~KiB to 4~MiB and both random and sequential access. 
+
+\subsection{Read/Write Mix}
 
 \begin{figure*}[thbp]
 \centering
     \includegraphics[width=1\linewidth]{figures/fio-bw-all-pattern-sysb.pdf}
 
     \vspace{-1em}
-    \caption{\textit{fio} bandwidth across read/write mixes and access patterns on Sys-B.}
+    \caption{\textit{fio} bandwidth across read/write mixes and block sizes on Sys-B.}
     \label{fig:fio-sysb-all-patterns}
 \end{figure*}
+
+{\color{blue}
+
+Fig.~\ref{fig:fio-sysb-all-patterns} shows aggregate bandwidth across the five read/write mixes for two \textit{fio} concurrency configurations ($nj$=32/$iod$=8 and $nj$=16/$iod$=16) on Sys-B, with block sizes from 4~KiB to 4~MiB and both random and sequential access. 
+
+}
 
 
 \subsection{DAOS POSIX Container Access Approaches}
 
+We compare the throughput of the same I/O workload with different DAOS container access approaches on Sys-A. By default, the redundancy factor ($rd\_fac$) of the DAOS POSIX containers created on Sys-A is set to 3. For higher throughput, we purposely reset $rd\_fac$ to 0.
+
 \subsubsection{\textit{fio}}
 
-Of the two interception libraries, \texttt{libpil4dfs} causes data corruption in \textit{fio} and is therefore excluded. We run a \texttt{randwrite} workload with $nj{=}16$, $iod{=}16$, $rd\_fac{=}0$ and $bs{=}1$\,MiB across the \texttt{dfs}, \texttt{pvsync2}, and \texttt{libaio} I/O engines on Sys-A, repeating each configuration 10~times and reporting the median values. Via \texttt{dfuse} without any interception library, the synchronous engine \texttt{pvsync2} (with an effective $iod$ of~1) deliver 39.4\,GiB/s, while \texttt{libaio} reaches 29.0\,GiB/s. Preloading \texttt{libioil} reduces bandwidth for both engines: \texttt{pvsync2} to 12.2\,GiB/s and \texttt{libaio} to 11.1\,GiB/s. The native \texttt{dfs} engine achieves the highest median bandwidth at 88.1\,GiB/s, outperforming other configurations by 2.2--8 times.
+Of the two interception libraries, \texttt{libpil4dfs} causes data corruption in \textit{fio} and is therefore excluded. We run a \texttt{randwrite} workload with $nj{=}16$, $iod{=}16$ and $bs{=}1$\,MiB across the \texttt{dfs}, \texttt{pvsync2}, and \texttt{libaio} I/O engines, repeating each configuration 10~times and reporting the median values. Via \texttt{dfuse} without any interception library, the synchronous engine \texttt{pvsync2} (with an effective $iod$ of~1) delivers 39.4\,GiB/s, while \texttt{libaio} reaches 29.0\,GiB/s. Preloading \texttt{libioil} reduces bandwidth for both engines: \texttt{pvsync2} to 12.2\,GiB/s and \texttt{libaio} to 11.1\,GiB/s. The native \texttt{dfs} engine achieves the highest median bandwidth at 88.1\,GiB/s, outperforming other configurations by 2.2--8 times.
 
-CPU utilization measurements corroborate the throughput trends. The \texttt{dfuse} engines without \texttt{libioil} and the \texttt{dfs} engine all drive the client CPU above 90\% (99\% and 93\%, respectively). The outlier is \texttt{libioil}+\texttt{libaio}, which consumes only 18\% CPU while yielding just 11.1\,GiB/s, suggesting that the asynchronous I/O queue incurs substantial overhead through the interception layer. Although \texttt{dfs} achieves 88.1\,GiB/s, this only represents 47\% of Sys-A's aggregated 1{,}600\,Gbps NIC capacity, indicating that \textit{fio} \texttt{dfs} throughput is CPU-bound rather than network-limited on this platform.
+CPU utilization measurements corroborate the throughput trends. The \texttt{dfuse} engines without \texttt{libioil} and the \texttt{dfs} engine all drive the client CPU above 90\% (99\% and 93\%, respectively). The outlier is \texttt{libioil}+\texttt{libaio}, which consumes only 18\% CPU while yielding just 11.1\,GiB/s, suggesting that the asynchronous I/O queue incurs substantial overhead through the interception layer. Although \texttt{dfs} achieves 88.1\,GiB/s, this only represents 47\% of Sys-A's aggregated 1{,}600\,Gbps NIC capacity, and 68\% of the single-node \texttt{ior} peak write bandwidth, indicating that \textit{fio} \texttt{dfs} throughput is CPU-bound rather than network-limited on this platform.
 
 
 \subsubsection{IOR}
 
 \subsection{DAOS vs.\ NFS}
-
-The v4.2
 
 
 \begin{figure*}[thbp]
