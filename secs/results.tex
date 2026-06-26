@@ -15,7 +15,7 @@
 \end{figure}
 
 
-We run the \textit{fio} \texttt{randwrite} workload across varying block sizes and queue depths on Sys-B. Each configuration is repeated more than 10 times. Fig.~\ref{fig:fio-sweep-bs_iod} shows the measured bandwidth and median values. Block size has a greater impact on bandwidth than queue depth. The two small block sizes (4~KiB and 16~KiB) yield persistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, saturating at $iod{\geq}32$. The large block sizes (1~MiB, 2~MiB, and 4~MiB) yield bandwidth that rises sharply from $iod{=}4$ to $iod{=}8$ and plateaus at 16--21~GiB/s for $iod{\geq}16$, more than an order of magnitude above the small-block regime. These saturation patterns indicate that a single-process \textit{fio} job is IOPS-bounded regardless of block size. Run-to-run variability, quantified by the coefficient of variation (CV\% = standard deviation / mean $\times$ 100\%), remains within 8\% across all configurations, indicating consistent write performance.
+We run the \textit{fio} \texttt{randwrite} workload across varying block sizes and queue depths on Sys-B. Each configuration is repeated more than 10 times. Fig.~\ref{fig:fio-sweep-bs_iod} shows the measured bandwidth and median values. Block size has a greater impact on bandwidth than queue depth. The two small block sizes (4~KiB and 16~KiB) yield persistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, saturating at $iod{\geq}32$. Large block sizes (1~MiB, 2~MiB, and 4~MiB) yield bandwidth that rises sharply from $iod{=}4$ to $iod{=}8$ and plateaus at 16--21~GiB/s for $iod{\geq}16$, more than an order of magnitude above the small-block regime. These saturation patterns indicate that a single-process \textit{fio} job is IOPS-bounded regardless of block size. Run-to-run variability, quantified by the coefficient of variation (standard deviation / mean $\times$ 100\%), remains within 8\% across all configurations, indicating consistent write performance.
 
 
 \subsubsection{Single-Node Number of Processes Scaling}
@@ -29,7 +29,7 @@ We run the \textit{fio} \texttt{randwrite} workload across varying block sizes a
     \label{fig:fio-sweep-bs_nj}
 \end{figure}
 
-We then fix $iod{=}16$ and sweep the number of \textit{fio} jobs ($nj$), repeating each $bs$--$nj$ combination 10 times. Large block sizes (1~MiB, 2~MiB, and 4~MiB) are already near-peak at $nj{=}4$, delivering 22.5--22.9~GiB/s (over 90\% of the NIC limit), and remain flat across all $nj$ values, with a slight decline to 21.2--21.5~GiB/s at $nj{\geq}32$. This indicates that 4--16 jobs with $iod{=}16$ suffice to saturate the NIC for large blocks, and additional processes offer no further benefit. In contrast, small block sizes continue to scale with $nj$, saturating at $nj{=}16$ with median bandwidth peaking at 6.9~GiB/s and 16.7~GiB/s for 4~KiB and 16~KiB, respectively, more than 8$\times$ higher than the single-process values in Fig.~\ref{fig:fio-sweep-bs_iod}. This shows that both $nj$ and $iod$ scaling are essential to improve throughput for small block sizes. Run-to-run variability remains within 12\% across all configurations.
+We then fix $iod{=}16$ and sweep the number of \textit{fio} jobs ($nj$), repeating each $bs$--$nj$ combination 10 times. As Fig. \ref{fig:fio-sweep-bs_iod} shows, the large block sizes (1~MiB, 2~MiB, and 4~MiB) are already near-peak at $nj{=}4$, delivering 22.5--22.7~GiB/s (over 90\% of the NIC limit), and remain flat across all $nj$ values, with a slight decline to 21.2--21.5~GiB/s at $nj{\geq}32$. This indicates that on Sys-B, 4--16 jobs with $iod{=}16$ suffice to saturate the NIC for large blocks, and additional processes offer no further benefit. In contrast, small block sizes continue to scale with $nj$, saturating at $nj{=}16$ with median bandwidth peaking at 6.9~GiB/s and 16.7~GiB/s for 4~KiB and 16~KiB, respectively, more than 8$\times$ higher than the single-process values in Fig.~\ref{fig:fio-sweep-bs_iod}. This shows that both $nj$ and $iod$ scaling are essential to improve throughput for small block sizes. Run-to-run variability remains within 12\% across all configurations.
 
 
 
@@ -52,9 +52,7 @@ In \textit{fio} reports, latency is further broken down into submission latency 
 
 \subsubsection{Multi-Node Scaling}
 
-
-
-For a single node, xfer=16~MiB yields peak write of 128.7 GiB/s (PPN=48, about 69\% of the per-node NIC limit) and peak read of 59.6 GiB/s (PPN=8); xfer=2~MiB yields peak write of 101.9 GiB/s (PPN=48) and peak read of 49.7 GiB/s (PPN=32). Scaling to 32 nodes, write bandwidth peaks at 2,168.4 GiB/s (PPN=48, xfer=16~MiB) and read peaks at 2,095.9 GiB/s (PPN=32, xfer=2~MiB), both exceeding 2~TiB/s and demonstrating that Sys-A sustains multi-TiB/s throughput under high client concurrency.
+We run the \textit{ior} workloads with the \texttt{dfs} backend. For a single node, xfer=16~MiB yields peak write of 128.7 GiB/s (PPN=48, about 69\% of the per-node NIC limit) and peak read of 59.6 GiB/s (PPN=8); xfer=2~MiB yields peak write of 101.9 GiB/s (PPN=48) and peak read of 49.7 GiB/s (PPN=32). Scaling to 32 nodes, write bandwidth peaks at 2,168.4 GiB/s (PPN=48, xfer=16~MiB) and read peaks at 2,095.9 GiB/s (PPN=32, xfer=2~MiB), both exceeding 2~TiB/s and demonstrating that Sys-A sustains multi-TiB/s throughput under high client concurrency.
 
 \begin{figure}[!t]
     \centering
