@@ -10,17 +10,26 @@
     \includegraphics[width=1\linewidth]{figures/fio-randwrite_bs-iod_median-bw.pdf}
 
     \vspace{-1em}
-    \caption{Bandwidth of \textit{fio} \texttt{randwrite} on Sys-B.}
+    \caption{Bandwidth of \textit{fio} \texttt{randwrite} on Sys-B across I/O queue depths.}
     \label{fig:fio-sweep-bs_iod}
 \end{figure}
 
 
-Fig.~\ref{fig:fio-sweep-bs_iod} shows the \textcolor{blue}{10-run} median bandwidth of the \textit{fio} \texttt{randwrite} workload across varying block sizes and queue depths on Sys-B. Block size is the dominant factor: the two small block sizes (4~KiB and 16~KiB) yield persistently low bandwidth of 0.41--0.69~GiB/s and 1.19--2.25~GiB/s, respectively, saturating at $iod{\geq}32$. The large block sizes (1~MiB, 2~MiB, and 4~MiB) rise sharply from $iod{=}4$ to $iod{=}8$ and plateau at 16--20~GiB/s for $iod{\geq}16$, more than an order of magnitude above the small-block regime. These saturation patterns indicate that a single-process \textit{fio} job is IOPS-bounded regardless of block size. Run-to-run variability, quantified by the coefficient of variation (CV\% = standard deviation / mean $\times$ 100\%), remains within 8.2\% across all configurations, indicating consistent write performance.
+We run the \textit{fio} \texttt{randwrite} workload across varying block sizes and queue depths on Sys-B. Each configuration is repeated more than 10 times. Fig.~\ref{fig:fio-sweep-bs_iod} shows the measured bandwidth and median values. Block size has a greater impact on bandwidth than queue depth. The two small block sizes (4~KiB and 16~KiB) yield persistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, saturating at $iod{\geq}32$. The large block sizes (1~MiB, 2~MiB, and 4~MiB) yield bandwidth that rises sharply from $iod{=}4$ to $iod{=}8$ and plateaus at 16--21~GiB/s for $iod{\geq}16$, more than an order of magnitude above the small-block regime. These saturation patterns indicate that a single-process \textit{fio} job is IOPS-bounded regardless of block size. Run-to-run variability, quantified by the coefficient of variation (CV\% = standard deviation / mean $\times$ 100\%), remains within 8\% across all configurations, indicating consistent write performance.
 
 
 \subsubsection{Single-Node Number of Processes Scaling}
 
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=1\linewidth]{figures/fio-randwrite_bs-nj_median-bw.pdf}
 
+    \vspace{-1em}
+    \caption{Bandwidth of \textit{fio} \texttt{randwrite} on Sys-B across number of processes.}
+    \label{fig:fio-sweep-bs_nj}
+\end{figure}
+
+We then fix $iod{=}16$ and sweep the number of \textit{fio} jobs ($nj$), repeating each $bs$--$nj$ combination 10 times. Large block sizes (1~MiB, 2~MiB, and 4~MiB) are already near-peak at $nj{=}4$, delivering 22.5--22.9~GiB/s (over 90\% of the NIC limit), and remain flat across all $nj$ values, with a slight decline to 21.2--21.5~GiB/s at $nj{\geq}32$. This indicates that 4--16 jobs with $iod{=}16$ suffice to saturate the NIC for large blocks, and additional processes offer no further benefit. In contrast, small block sizes continue to scale with $nj$, saturating at $nj{=}16$ with median bandwidth peaking at 6.9~GiB/s and 16.7~GiB/s for 4~KiB and 16~KiB, respectively, more than 8$\times$ higher than the single-process values in Fig.~\ref{fig:fio-sweep-bs_iod}. This shows that both $nj$ and $iod$ scaling are essential to improve throughput for small block sizes. Run-to-run variability remains within 12\% across all configurations.
 
 
 
@@ -39,8 +48,6 @@ Fig.~\ref{fig:fio-sweep-bs_iod} shows the \textcolor{blue}{10-run} median bandwi
 We evaluate five $nj/iod$ combinations on Sys-B using a \textit{fio} \texttt{randwrite} workload with a block size of 1~MiB and the \texttt{dfs} I/O engine, keeping their product fixed at 256. Across all configurations, the bandwidth (21.5--23.0~GiB/s) and mean latency (10.8--11.5~ms) remain consistent, while the maximum latency varies widely from 83.1 to 165.0~ms. 
 
 In \textit{fio} reports, latency is further broken down into submission latency ($slat$) and completion latency ($clat$), each reported as minimum, mean, maximum, and percentiles (P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.05~ms across all configurations. However, when the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 48.58--59.08~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases: at $nj=4$ ($iod=64$), P99.99 reaches 149.95~ms, approximately 27$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable.
-
-Notably, the achieved bandwidth across all five configurations exceeds 90\% of the 200~Gbps NIC limit, indicating that NIC is the bottleneck for this client node.
 
 
 \subsubsection{Multi-Node Scaling}
