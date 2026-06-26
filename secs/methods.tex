@@ -31,9 +31,9 @@ The \textit{fio} job concurrency is controlled by two parameters: the number of 
     \item Fix total concurrency ($nj \times iod$) and $bs$, sweep the $nj/iod$ split. This quantifies how concurrency structure affects tail latency at similar throughput.
 \end{enumerate}
 
-We evaluate the inter-node scalability with \texttt{ior} by running MPI processes across up to 32 DAOS client nodes, and each process issuing sequential I/O requests of a fixed transfer size (xfer). We sweep the number of client nodes, MPI processes per node (PPN), and transfer sizes, reporting aggregated read and write bandwidth. Following \cite{DAOS-aurora-20-node-test2024scw}, MPI processes are bound to CPU cores using the breadth-skip method.
+We evaluate the inter-node scalability with \texttt{ior} by running MPI processes across up to 32 DAOS client nodes, with each process issuing sequential I/O requests of a fixed transfer size (xfer). We sweep the number of client nodes, MPI processes per node (PPN), and transfer sizes, reporting aggregated read and write bandwidth. Following \cite{DAOS-aurora-20-node-test2024scw}, MPI processes are bound to CPU cores using the breadth-skip method.
 
-\subsubsection{Read/Write Mix}
+\subsubsection{Read/Write Patterns}
 
 In traditional filesystems, sequential access significantly outperforms random. DAOS, in contrast, narrows this gap through its log-structured storage engine and byte-addressable object store. To investigate this effect, we test \textit{fio} under five read/write mixes: (1) read-only; (2) read-heavy (20\% write); (3) read-balanced (50\% write); (4) write-heavy (80\% write); and (5) write-only, each mix with both random and sequential access.
 

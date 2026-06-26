@@ -29,7 +29,8 @@ We run the \textit{fio} \texttt{randwrite} workload across varying block sizes a
     \label{fig:fio-sweep-bs_nj}
 \end{figure}
 
-We then fix $iod{=}16$ and sweep the number of \textit{fio} jobs ($nj$), repeating each $bs$--$nj$ combination 10 times. As Fig. \ref{fig:fio-sweep-bs_iod} shows, the large block sizes (1~MiB, 2~MiB, and 4~MiB) are already near-peak at $nj{=}4$, delivering 22.5--22.7~GiB/s (over 90\% of the NIC limit), and remain flat across all $nj$ values, with a slight decline to 21.2--21.5~GiB/s at $nj{\geq}32$. This indicates that on Sys-B, 4--16 jobs with $iod{=}16$ suffice to saturate the NIC for large blocks, and additional processes offer no further benefit. In contrast, small block sizes continue to scale with $nj$, saturating at $nj{=}16$ with median bandwidth peaking at 6.9~GiB/s and 16.7~GiB/s for 4~KiB and 16~KiB, respectively, more than 8$\times$ higher than the single-process values in Fig.~\ref{fig:fio-sweep-bs_iod}. This shows that both $nj$ and $iod$ scaling are essential to improve throughput for small block sizes. Run-to-run variability remains within 12\% across all configurations.
+We then fix $iod{=}16$ and sweep the number of \textit{fio} jobs ($nj$), repeating each $bs$--$nj$ combination 10 times. As Fig. \ref{fig:fio-sweep-bs_iod} shows, the large block sizes (1~MiB, 2~MiB, and 4~MiB) are already near-peak at $nj{=}4$, delivering 22.5--22.7~GiB/s (over 90\% of the NIC limit), and remain flat across all $nj$ values, with a slight decline to 21.2--21.5~GiB/s at $nj{\geq}32$. This indicates that for the Sys-B DAOS client node, throughput is NIC-bounded that 4--16 processes with $iod{=}16$ suffice to saturate the NIC for large block sizes, and additional processes offer no further benefit. In
+contrast, small block sizes continue to scale with $nj$, saturating at $nj{\geq}16$ with median bandwidth peaking at 6.9~GiB/s and 16.7~GiB/s for 4~KiB and 16~KiB, respectively, more than 8$\times$ higher than the single-process values in Fig.~\ref{fig:fio-sweep-bs_iod}. This shows that both $nj$ and $iod$ scaling are essential to improve throughput for small block sizes. Run-to-run variability remains within 12\% across all configurations.
 
 
 
@@ -69,7 +70,7 @@ As Fig.~\ref{fig:ior-scaling}(a) shows, the node-scaling behavior of read and wr
 
 
 
-\subsection{Read/Write Mix}
+\subsection{Read/Write Patterns}
 
 \begin{figure*}[!t]
 \centering
