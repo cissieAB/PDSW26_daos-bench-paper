@@ -28,8 +28,6 @@ When creating containers, users configure properties such as the container type,
 \textit{fio} (Flexible I/O Tester)~\cite{fio-github} and IOR~\cite{ior-github, ior-paper2008sc} are two widely used I/O benchmarking tools.
 \textit{fio} targets single-node performance and supports a broad range of I/O engines and sequential and random access patterns. IOR is an MPI-based benchmark suite. Its \texttt{ior} executable measures aggregate bulk I/O throughput across MPI ranks, while \texttt{mdtest} measures metadata operations such as file creation and removal.
 
-IO500~\cite{kunkel2019io500} defines representative workloads comprising \texttt{ior} and \texttt{mdtest} configurations (e.g., \texttt{ior-easy}, \texttt{mdtest-hard}) and produces a composite score as the geometric mean of ten component results, serving as a standard reference for comparing large-scale HPC storage systems.
-
 
 Both tools have been widely adopted in prior DAOS performance studies.
 % , where we summarize their configurations, workloads and key findings in Table~\ref{tab:perf-lit-review}. 

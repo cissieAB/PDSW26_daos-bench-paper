@@ -62,7 +62,7 @@ In \textit{fio} reports, latency is further broken down into submission latency 
     \label{fig:ior-scaling}
 \end{figure}
 
-DAOS POSIX containers on Sys-A default to a redundancy factor (\texttt{rd\_fac}) of 3; we set it to 0 across all experiments to maximize throughput and configure the chunk size to 2~MiB for \texttt{dfs} access.
+DAOS POSIX containers on Sys-A default to a redundancy factor (\texttt{rd\_fac}) of 3; we set it to 0 across all experiments to maximize throughput. For the IOR \texttt{dfs} access, we configure the chunk size to 2~MiB.
 
 We evaluate \texttt{ior} read-after-write workloads using the \texttt{dfs} backend across PPN\,=\,8, 16, 32, and 48 with transfer sizes of 2~MiB and 16~MiB. Every configuration is repeated for 10 iterations.
 
