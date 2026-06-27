@@ -53,57 +53,39 @@ In \textit{fio} reports, latency is further broken down into submission latency 
 
 \subsubsection{Multi-Node Scaling}
 
-We run the \textit{ior} workloads with the \texttt{dfs} backend. For a single node, xfer=16~MiB yields peak write of 128.7 GiB/s (PPN=48, about 69\% of the per-node NIC limit) and peak read of 59.6 GiB/s (PPN=8); xfer=2~MiB yields peak write of 101.9 GiB/s (PPN=48) and peak read of 49.7 GiB/s (PPN=32). Scaling to 32 nodes, write bandwidth peaks at 2,168.4 GiB/s (PPN=48, xfer=16~MiB) and read peaks at 2,095.9 GiB/s (PPN=32, xfer=2~MiB), both exceeding 2~TiB/s and demonstrating that Sys-A sustains multi-TiB/s throughput under high client concurrency.
-
 \begin{figure}[!t]
     \centering
-    \includegraphics[width=1\linewidth]{figures/ior-scaling-node-ppn.pdf}
+    \includegraphics[width=1\linewidth]{figures/ior-scaling.pdf}
 
     \vspace{-1em}
-    \caption{Peak \texttt{ior} read and write bandwidth on Sys-A.}
+    \caption{\texttt{ior} read-after-write bandwidth scaling with node count and processes per node on Sys-A.}
     \label{fig:ior-scaling}
 \end{figure}
 
-As Fig.~\ref{fig:ior-scaling}(a) shows, the node-scaling behavior of read and write differs. Read at both transfer sizes grows monotonically with the number of client nodes, while write slows from 16 to 32 nodes. xfer=16~MiB yields higher write throughput across all node counts, but for read, xfer=2~MiB outperforms xfer=16~MiB at 4--32 nodes. Fig.~\ref{fig:ior-scaling}(b) shows that the optimal PPN also differs by transfer size and access type. For xfer=2~MiB, both read and write benefit from higher PPN up to PPN=32. For xfer=16~MiB, write bandwidth increases monotonically with PPN, whereas read peaks at PPN=16 and degrades sharply at PPN$\geq$32. Overall, write throughput consistently favors larger transfer sizes and higher PPN, whereas read throughput at scale requires careful co-tuning of transfer size and PPN to avoid degradation.
+DAOS POSIX containers on Sys-A default to a redundancy factor (\texttt{rd\_fac}) of 3; we set it to 0 across all experiments to maximize throughput and configure the chunk size to 2~MiB for \texttt{dfs} access.
+
+We evaluate \texttt{ior} read-after-write workloads using the \texttt{dfs} backend across PPN\,=\,8, 16, 32, and 48 with transfer sizes of 2~MiB and 16~MiB. Every configuration is repeated for 10 iterations.
 
 
 
 
-
-\subsection{Read/Write Patterns}
-
-\begin{figure*}[!t]
-\centering
-    \includegraphics[width=1\linewidth]{figures/fio-bw-all-pattern-sysb.pdf}
-
-    \vspace{-1em}
-    \caption{\textit{fio} bandwidth across read/write mixes and block sizes on Sys-B.}
-    \label{fig:fio-sysb-all-patterns}
-\end{figure*}
-
-{\color{blue}
-
-Fig.~\ref{fig:fio-sysb-all-patterns} shows aggregate bandwidth across the five read/write mixes for two \textit{fio} concurrency configurations ($nj$=32/$iod$=8 and $nj$=16/$iod$=16) on Sys-B, with block sizes from 4~KiB to 4~MiB and both random and sequential access. 
-
-}
-
-
- 
 \subsection{DAOS POSIX Container Access Approaches}
 
-We compare throughput for the same I/O workload across different DAOS POSIX container access approaches on Sys-A. The containers on Sys-A have a default redundancy factor ($rd\_fac$) of 3. We set $rd\_fac = 0$ in all experiments to maximize throughput.
-
- 
-\subsubsection{\textit{fio}}
 
 Of the two interception libraries, \texttt{libpil4dfs} causes data corruption in \textit{fio} and is therefore excluded. We run a \texttt{randwrite} workload with $nj{=}16$, $iod{=}16$ and $bs{=}1$\,MiB across the \texttt{dfs}, \texttt{pvsync2}, and \texttt{libaio} I/O engines, repeating each configuration 10~times and reporting the median values. Via \texttt{dfuse} without any interception library, the synchronous engine \texttt{pvsync2} (with an effective $iod$ of~1) delivers 39.4\,GiB/s, while \texttt{libaio} reaches 29.0\,GiB/s. Preloading \texttt{libioil} reduces bandwidth for both engines: \texttt{pvsync2} to 12.2\,GiB/s and \texttt{libaio} to 11.1\,GiB/s. The native \texttt{dfs} engine achieves the highest median bandwidth at 88.1\,GiB/s, outperforming other configurations by 2.2--8 times.
 
-CPU utilization measurements corroborate the throughput trends. The \texttt{dfuse} engines without \texttt{libioil} and the \texttt{dfs} engine all drive the client CPU above 90\% (99\% and 93\%, respectively). The outlier is \texttt{libioil}+\texttt{libaio}, which consumes only 18\% CPU while yielding just 11.1\,GiB/s, suggesting that the asynchronous I/O queue incurs substantial overhead through the interception layer. Although \texttt{dfs} achieves 88.1\,GiB/s, this only represents 47\% of Sys-A's aggregated 1{,}600\,Gbps NIC capacity, and 68\% of the single-node \texttt{ior} peak write bandwidth, indicating that \textit{fio} \texttt{dfs} throughput is CPU-bound rather than network-limited on this platform.
-
-
  
-\subsubsection{IOR}
 
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=1\linewidth]{figures/iorAndfio_engine-cmp.pdf}
+
+    \vspace{-1em}
+    \caption{Bandwidth under different DAOS POSIX container access methods.}
+    \label{fig:access-cmp}
+\end{figure}
+
+\subsection{Read/Write Patterns}
  
 \subsection{DAOS vs.\ NFS}
 
