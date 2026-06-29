@@ -9,7 +9,7 @@
 Aurora is Argonne National Laboratory's exascale supercomputer with 10,624 compute nodes \cite{aurora-intro2025}. Aurora currently has the largest DAOS deployment in production, comprising 1,024 storage nodes \cite{aurora-daos-slingshot-rpc2025cug, io500-ics26}. We were allocated a 100~TB DAOS pool under the \texttt{daos\_user} group. Per the Aurora user guide \cite{daos-aurora-guide} and our system queries, this group spans 128\footnote{Only 126--127 nodes were active during the experiments. } storage nodes, each with 16 PMem devices and 2 200~Gbps Slingshot-11 Ethernet NICs.
 
 
-Aurora uses a Dragonfly network topology \cite{aurora-intro2025, daos-aurora-guide}: the 1,024 DAOS storage nodes spanning 64 racks form 8 Dragonfly groups, while client nodes are distributed across 166 groups. This production-scale topology explains the bandwidth difference between our results and \cite{DAOS-aurora-20-node-test2024scw}, which used identical node specifications but a much simpler network configuration.
+Aurora deploys a large-scale Dragonfly network topology \cite{aurora-intro2025, daos-aurora-guide}. Its 1,024 DAOS storage nodes span 64 racks organized into 8 Dragonfly groups, while client nodes are distributed across 166 groups. Cross-group traffic traverses multiple network hops, which partially explains the bandwidth difference between our results and \cite{DAOS-aurora-20-node-test2024scw}, which used identical node specifications but a simpler network topology.
 
 
 \subsubsection{Our Testbed}
