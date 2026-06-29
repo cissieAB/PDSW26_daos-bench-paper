@@ -83,7 +83,11 @@ Although \texttt{ior} read throughput eventually surpasses write throughput, the
 
 Fig.~\ref{fig:access-cmp} compares the 10-run median bandwidth of identical \textit{fio} and \texttt{ior} workloads across three DAOS container access methods: POSIX mounts the container via \textit{dfuse}, IL augments the mount with an interception library, and DFS uses the native \texttt{dfs} interface. For \textit{fio}, we run \texttt{randwrite} with $iod$/$nj$=16 using the \texttt{pvsyncv2} and \texttt{dfs} engines. The \texttt{ior} workload is read-after-write with PPN=48 and $ts$=2~MiB. Since \texttt{libpil4dfs} fails the \textit{fio} runs, we fall back to the legacy \texttt{libioil}.
 
+{\color{blue}
+
 POSIX via \textit{dfuse} incurs severe overhead for \texttt{ior}, delivering only 3.1 and 0.8~GiB/s for read and write---roughly $30\times$ below IL. IL achieves the highest \texttt{ior} throughput (91.0~GiB/s read, 153.0~GiB/s write) but drops to 12.2~GiB/s for \textit{fio} \texttt{randwrite}, with notably higher variability on the write side. DFS provides the most balanced profile: 88.1~GiB/s for \textit{fio} and 69.9/133.7~GiB/s for \texttt{ior} read/write. These results suggest that workloads bypassing the POSIX layer via a native DAOS interface---either through interception or direct DFS access---are necessary to approach hardware bandwidth limits.
+
+}
 
 \subsection{Read/Write Patterns}
 
