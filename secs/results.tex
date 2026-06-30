@@ -50,9 +50,9 @@ contrast, small block sizes continue to scale with $nj$, saturating at $nj{\geq}
 \end{figure}
 
 
-We evaluate five $nj/iod$ combinations on Sys-B with a block size of 1~MiB and the \texttt{dfs} I/O engine, keeping their product fixed at 256. Across all configurations, the bandwidth (21.5--23.0~GiB/s) and mean latency (10.8--11.5~ms) remain consistent, while the maximum latency varies widely from 83.1 to 165.0~ms. 
+We evaluate five $nj/iod$ combinations on Sys-B with a block size of 1~MiB and the \texttt{dfs} I/O engine, keeping their product fixed at 256. Each combination is repeated more than 10 times and we compare the median value. Across all configurations, the bandwidth (22.4--22.9~GiB/s) and mean latency (10.8--11.1~ms) remain consistent, while the maximum latency varies widely from 144 to 165~ms. 
 
-In \textit{fio} reports, latency is further broken down into submission latency ($slat$) and completion latency ($clat$), each reported as minimum, mean, maximum, and percentiles (P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.05~ms across all configurations. However, when the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 48.58--59.08~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases: at $nj{=}4$ ($iod{=}64$), P99.99 reaches 149.95~ms, approximately 27$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable.
+In \textit{fio} reports, latency is further broken down into submission latency ($slat$) and completion latency ($clat$), each reported as minimum, mean, maximum, and percentiles (P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.06~ms across all configurations. However, when the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 45.6--67.9~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases: at $nj{=}4$ ($iod{=}64$), P99.99 $clat$ reaches 143.7~ms, approximately 26$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable.
 
 \textbf{Takeaway:} At fixed total concurrency, tail latency (P99.99 $clat$) is highly sensitive to the $nj/iod$ split. More jobs with shallower per-job queues reduce tail latency at the cost of higher submission overhead.
 
@@ -113,6 +113,8 @@ POSIX via \textit{dfuse} delivers substantially lower throughput than DFS across
     \caption{Bandwidth under different read/write patterns on Sys-B.}
     \label{fig:fio-all-pattern}
 \end{figure}
+
+Fig.~\ref{fig:fio-all-pattern} shows the 10-run median throughput of the 10 \textit{fio} read/write mix workloads with 5 different block sizes on Sys-B.  
  
 Being a distributed storage system, the read performance of DAOS is expected to be less consistent than write. We observe
 
