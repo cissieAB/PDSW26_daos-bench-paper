@@ -114,14 +114,26 @@ POSIX via \textit{dfuse} delivers substantially lower throughput than DFS across
     \label{fig:fio-all-pattern}
 \end{figure}
 
-Fig.~\ref{fig:fio-all-pattern} shows the 10-run median throughput of the 10 \textit{fio} read/write mix workloads with 5 different block sizes on Sys-B.  
- 
-Being a distributed storage system, the read performance of DAOS is expected to be less consistent than write. We observe
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=1\linewidth]{figures/fio-read-boxplot.pdf}
+
+    \vspace{-1em}
+    \caption{Boxplot of \textit{fio} sequential-read ($iod$/$nj$=16) throughput on Sys-B.}
+    \label{fig:fio-read-boxplot}
+\end{figure}
+
+Fig.~\ref{fig:fio-all-pattern} shows the 10-run median throughput of \textit{fio} read/write mix workloads ($iod$/$nj$=16) across five block sizes on Sys-B. Write throughput substantially outperforms read: write-only saturates at 23.0~GiB/s for large block sizes ($bs \geq$1~MiB) whereas read-only plateaus near 4.9~GiB/s, a roughly 5$\times$ asymmetry. The aggregate throughput of each read/write mix scales monotonically with the write fraction, because write performance dominates the total.
+
+For large $bs$, sequential and random access converge to within 10\% for both reads and writes, suggesting that DAOS saturates its internal striping parallelism regardless of access order at coarse transfer granularities. In contrast, for small block sizes (4 and 16~KiB), random access outperforms sequential by 3--6$\times$, with the gap most pronounced in read-dominated patterns. For instance, at 4~KiB under a read-only workload, random achieves 2.8~GiB/s while sequential reaches only 0.5~GiB/s. The same disparity appears for small-block writes: random 16~KiB reaches 19.2~GiB/s write-only versus 4.9~GiB/s for sequential. This behavior suggests that at fine granularities, \textit{fio} random I/O distributes load more evenly across DAOS storage targets, whereas small sequential requests may serialize within a single target or fail to exploit cross-target striping effectively.
+
+Read throughput also exhibits notable run-to-run variability. At small block sizes, sequential-read variability stays within 2.0\%, while random reads reach up to 12.4\%. At large block sizes, variability rises above 15\%; sequential reads are more variable than random, peaking at 22.8\% at $bs{=}$2~MiB. Fig.~\ref{fig:fio-read-boxplot} shows the bandwidth distribution for both access patterns, highlighting three outlier runs in sequential reads at $bs{=}$2 and 4~MiB whose throughput is nearly half the median.
+
 
 \subsection{DAOS vs.\ NFS}
 
 
-\begin{figure*}[!t]
+\begin{figure*}[thbp]
     \centering
     \includegraphics[width=1\linewidth]{figures/fio-cmp_bw-meanlat-cpu.pdf}
 
@@ -129,6 +141,10 @@ Being a distributed storage system, the read performance of DAOS is expected to 
     \caption{Comparison between DAOS and NVMe-based NFS on Sys-B.}
     \label{fig:daos-vs-nsf}
 \end{figure*}
+
+We read the same file using single-process \textit{fio} sequential reads under three scenarios: (1) DAOS with the \texttt{dfs} engine; (2) NFS with the asynchronous I/O engine \texttt{libaio}; and (3) NFS with the synchronous engine \texttt{pvsync2}. Scenarios (1) and (2) use an I/O queue depth of 32.
+
+Fig.~\ref{fig:daos-vs-nsf} reports the throughput, mean latency, and CPU usage across these scenarios; each value is the median of 10 runs. Compared to DAOS, NFS is insensitive to block size, 
 
 
 
