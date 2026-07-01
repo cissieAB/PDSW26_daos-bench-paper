@@ -4,6 +4,7 @@
 \subsection{I/O Concurrency}
 
 \subsubsection{Single-Process I/O Queue Depth Scaling}
+\label{sec:chunk-size}
 
 \begin{figure}[t]
     \centering
@@ -15,14 +16,9 @@
 \end{figure}
 
 
-We run the \textit{fio} \texttt{randwrite} workload across varying block sizes and queue depths on Sys-B. Each configuration is repeated at least 10 times. Fig.~\ref{fig:fio-sweep-bs_iod} shows the measured bandwidth and median values. Block size has a greater impact on bandwidth than queue depth. The two small block sizes (4~KiB and 16~KiB) yield persistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, saturating at $iod{\geq}32$. Large block sizes (1~MiB, 2~MiB, and 4~MiB) yield bandwidth that rises sharply from $iod{=}4$ to $iod{=}8$ and plateaus at 16--21~GiB/s for $iod{\geq}16$, more than an order of magnitude above the small-block regime. These saturation patterns indicate that a single-process \textit{fio} job is IOPS-bounded regardless of block size. Run-to-run variability, quantified by the coefficient of variation (standard deviation / mean $\times$ 100\%), remains within 8\% across all configurations, indicating consistent write performance.
+We run the \textit{fio} \texttt{randwrite} workload across varying block sizes and queue depths on Sys-B. Each configuration is repeated at least 10 times. Fig.~\ref{fig:fio-sweep-bs_iod} shows the measured bandwidth, with median values indicated. Block size has a greater impact on bandwidth than queue depth. The two small block sizes (4~KiB and 16~KiB) yield persistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, saturating at $iod{\geq}32$. Large block sizes (1~MiB, 2~MiB, and 4~MiB) yield bandwidth that rises sharply from $iod{=}4$ to $iod{=}8$ and plateaus at 16--21~GiB/s for $iod{\geq}16$, more than an order of magnitude above the small-block regime. These saturation patterns indicate that a single-process \textit{fio} job is CPU/IOPS-bounded regardless of block size. Run-to-run variability, quantified by the coefficient of variation (standard deviation divided by mean, $\times$ 100\%), remains within 8\% across all configurations, indicating consistent write performance.
 
-{
-\color{blue}
-This is the largest I/O request size that a DFS client will send to a storage target in a single request.
 
-In DAOS DFS (POSIX) containers, the \emph{chunk size} is a DFS filesystem attribute that sets the maximum contiguous data written to a single storage target before the remainder is striped to the next target~\cite{daos-user-guide}. The default is 1~MiB. I/O transfers smaller than the chunk size are routed to a single target and cannot exploit cross-target striping parallelism; transfers at or above the chunk size distribute data across multiple targets. This threshold is the direct reason for the performance boundary at 1~MiB visible in Figs.~\ref{fig:fio-sweep-bs_iod}--\ref{fig:fio-sweep-bs_nj}: below it, throughput is IOPS-limited by a single target; at or above it, striping parallelism is engaged and bandwidth rises sharply. In the multi-node experiments of §\ref{sec:multinode}, the chunk size was raised to 2~MiB to match the coarser transfer granularity.
-}
 
 \textbf{Takeaway:} Block size dominates single-process bandwidth: large blocks ($\geq$1~MiB) saturate the bandwidth fast, while small blocks remain IOPS-bounded regardless of queue depth.
 
@@ -34,14 +30,15 @@ In DAOS DFS (POSIX) containers, the \emph{chunk size} is a DFS filesystem attrib
     \includegraphics[width=1\linewidth]{figures/fio-randwrite_bs-nj_median-bw.pdf}
 
     \vspace{-1em}
-    \caption{Bandwidth of \textit{fio} \texttt{randwrite} on Sys-B across number of processes.}
+    \caption{Bandwidth of \textit{fio} \texttt{randwrite} on Sys-B across process counts.}
     \label{fig:fio-sweep-bs_nj}
 \end{figure}
 
-We then fix $iod{=}16$ and sweep the number of \textit{fio} jobs ($nj$), repeating each $bs$--$nj$ combination 10 times. As Fig. \ref{fig:fio-sweep-bs_nj} shows, the large block sizes (1~MiB, 2~MiB, and 4~MiB) are already near-peak at $nj{=}4$, delivering 22.5--22.7~GiB/s (over 90\% of the NIC limit), and remain flat across all $nj$ values, with a slight decline to 21.2--21.5~GiB/s at $nj{\geq}32$. This indicates that for the Sys-B DAOS client node, throughput is NIC-bounded such that 4--16 processes with $iod{=}16$ suffice to saturate the NIC for large block sizes, and additional processes offer no further benefit. In
-contrast, small block sizes continue to scale with $nj$, saturating at $nj{\geq}16$ with median bandwidth peaking at 6.9~GiB/s and 16.7~GiB/s for 4~KiB and 16~KiB, respectively, more than 8$\times$ higher than the single-process values in Fig.~\ref{fig:fio-sweep-bs_iod}. This shows that both $nj$ and $iod$ scaling are essential to improve throughput for small block sizes. Run-to-run variability remains within 12\% across all configurations.
+We then fix $iod{=}16$ and sweep the number of \textit{fio} jobs ($nj$), repeating each $bs$--$nj$ combination 10 times. Multiple \textit{fio} jobs/processes are configured to write to the same DAOS object. As Fig. \ref{fig:fio-sweep-bs_nj} shows, the large block sizes (1~MiB, 2~MiB, and 4~MiB) are already near-peak at $nj{=}4$, delivering 22.5--22.7~GiB/s (over 90\% of the NIC limit), and remain flat across all $nj$ values, with a slight decline to 21.2--21.5~GiB/s at $nj{\geq}32$. This indicates that for the Sys-B DAOS client node, throughput is NIC-bounded such that 4--16 processes with $iod{=}16$ suffice to saturate the NIC for large block sizes, and additional processes offer no further benefit. In contrast, small block sizes continue to scale with $nj$, saturating at $nj{\geq}16$ with median bandwidth peaking at 6.9~GiB/s and 16.7~GiB/s for 4~KiB and 16~KiB, respectively, more than 7$\times$ higher than the single-process values in Fig.~\ref{fig:fio-sweep-bs_iod}. This shows that both $nj$ and $iod$ scaling are essential to improve throughput for small block sizes. Run-to-run variability remains within 12\% across all configurations.
 
-\textbf{Takeaway:} Large-block throughput saturates at fewer number of processes ($nj$); small-block throughput continues to scale with $nj$, requiring both high $nj$ and $iod$ to maximize bandwidth.
+According to the DAOS user guide~\cite{daos-user-guide}, the 1~MiB chunk size refers to the largest I/O size that a DAOS client sends to a storage target in a single request. Therefore, for larger block sizes, each I/O operation is broken into several 1~MiB requests, so the available bandwidth is more fully utilized, whereas for smaller block sizes, a greater number of I/O requests is issued while bandwidth remains underutilized. This explains why I/O size has greater impact than queue or process concurrency.
+
+\textbf{Takeaway:} Large-block throughput saturates at fewer number of processes ($nj$); small-block throughput requires both high $nj$ and $iod$ to maximize bandwidth.
 
 
 
@@ -57,19 +54,15 @@ contrast, small block sizes continue to scale with $nj$, saturating at $nj{\geq}
 \end{figure}
 
 
-We evaluate five $nj/iod$ combinations on Sys-B with a block size of 1~MiB and the \texttt{dfs} I/O engine, keeping their product fixed at 256. Each combination is repeated more than 10 times and we compare the median value. Across all configurations, the bandwidth (22.4--22.9~GiB/s) and mean latency (10.8--11.1~ms) remain consistent, while the maximum latency varies widely from 144 to 165~ms. 
+We evaluate five $nj/iod$ combinations on Sys-B with a block size of 1~MiB and the \texttt{dfs} I/O engine, keeping their product fixed at 256. Every \textit{fio} process writes to an individual object. Each combination is repeated more than 10 times and we compare the median value. Across all configurations, the bandwidth (22.4--22.9~GiB/s) and mean latency (10.8--11.1~ms) remain consistent, while maximum latency varies from 144 to 165~ms. 
 
-In \textit{fio} reports, latency is further broken down into submission latency ($slat$) and completion latency ($clat$), each reported as minimum, mean, maximum, and percentiles (P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.06~ms across all configurations. However, when the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 45.6--67.9~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases: at $nj{=}4$ ($iod{=}64$), P99.99 $clat$ reaches 143.7~ms, approximately 26$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable.
+In \textit{fio} reports, latency is further broken down into submission latency ($slat$), reported as minimum, mean, maximum, and completion latency ($clat$) reported as percentiles (P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.06~ms across all configurations. When the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 45.6--67.9~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases: at $nj{=}4$ ($iod{=}64$), P99.99 $clat$ reaches 143.7~ms, approximately 26$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable.
 
 \textbf{Takeaway:} At fixed total concurrency, tail latency (P99.99 $clat$) is highly sensitive to the $nj/iod$ split. More jobs with shallower per-job queues reduce tail latency at the cost of higher submission overhead.
 
 
 \subsubsection{Multi-Node Scaling}
 \label{sec:multinode}
-
-DAOS POSIX containers on Sys-A default to a redundancy factor (\texttt{rd\_fac}) of 3; we set \texttt{rd\_fac} to 0 across all experiments to maximize throughput. Following \cite{DAOS-aurora-20-node-test2024scw}, MPI processes are bound to CPU cores using the breadth-skip method. 
-
-We evaluate \texttt{ior} read-after-write workloads using the \texttt{dfs} backend with PPN\,=\,8,\,16,\,32,\,48 and transfer sizes ($ts$) of 2~MiB and 16~MiB, with the \texttt{dfs} chunk size set to 2~MiB. Despite being submitted via many HPC jobs and executed on different nodes ($n\geq64$), the run-to-run throughput variability remains within 11\% for all workloads.
 
 \begin{figure}[t]
     \centering
@@ -80,6 +73,8 @@ We evaluate \texttt{ior} read-after-write workloads using the \texttt{dfs} backe
     \label{fig:ior-scaling}
 \end{figure}
 
+We evaluate \texttt{ior} read-after-write workloads using the \texttt{dfs} backend on Sys-A. DAOS POSIX containers on Sys-A default to a redundancy factor (\texttt{rd\_fac}) of 3; we set \texttt{rd\_fac} to 0 across all experiments to maximize throughput. Following \cite{DAOS-aurora-20-node-test2024scw}, MPI processes are bound to CPU cores using the breadth-skip method. 
+We examine PPN\,=\,8,\,16,\,32,\,48 and transfer sizes ($ts$) of 2~MiB and 16~MiB, with the \texttt{dfs} chunk size set to 2~MiB. Despite being submitted via many HPC jobs and executed on different nodes ($n\geq64$), the run-to-run throughput variability remains within 11\% for all workloads.
 
 Fig.~\ref{fig:ior-scaling} reports the 10-iteration peak bandwidth for each node count ($n$) and PPN. DAOS scales near-linearly before saturation at $\mathrm{PPN} \times n = 4096$: all 8 tested node counts achieve higher throughput at $ts{=}$16~MiB than at $ts{=}$2~MiB, and 14 of the 16 $n$--$ts$ combinations reach peak throughput at PPN\,=\,48, with the remaining 2 peaking at PPN\,=\,32. At a single node, peak write and read bandwidths are 169.8~GiB/s (over 90\% of the NIC limit) and 138.8~GiB/s, respectively; at $n{=}16$, these scale to 1977.0 and 1830.8~GiB/s, and at $n{=}128$, to 5392.4 and 5519.3~GiB/s, demonstrating that DAOS on Sys-A is capable of delivering multi-TiB/s throughput with only tens of nodes. 
 
@@ -87,7 +82,7 @@ Although \texttt{ior} read throughput eventually surpasses write throughput, the
 
 
 
-\textbf{Takeaway:} DAOS scales near-linearly to multi-TiB/s with tens of nodes. At the process counts typical of streaming workloads, write throughput exceeds read, with the crossover requiring very high concurrency.
+\textbf{Takeaway:} DAOS scales near-linearly to multi-TiB/s with tens of client nodes. At the process counts typical of streaming workloads, write throughput exceeds read, with the crossover requiring very high concurrency.
 
 
 \subsection{DAOS POSIX Container Access Approaches}
@@ -113,54 +108,58 @@ POSIX via \textit{dfuse} delivers substantially lower throughput than DFS across
 \subsection{Read/Write Patterns}
 
 
-
 \begin{figure}[t]
     \centering
     \includegraphics[width=1\linewidth]{figures/fio-bw-all-pattern-nj16-iod16.pdf}
 
     \vspace{-1em}
-    \caption{Bandwidth under different \textit{fio} read/write mixes on Sys-B.}
+    \caption{Bandwidth under different \textit{fio} read/write mixes ($iod$/$nj$=16) on Sys-B.}
     \label{fig:fio-all-pattern}
 \end{figure}
-
-
-Fig.~\ref{fig:fio-all-pattern} shows the 10-run median throughput of \textit{fio} read/write mix workloads ($iod$/$nj$=16) across five block sizes on Sys-B. Write throughput substantially outperforms read: write-only saturates at 23.0~GiB/s for large block sizes ($bs \geq$1~MiB) whereas read-only plateaus near 4.9~GiB/s, a roughly 5$\times$ asymmetry. The aggregate throughput of each read/write mix scales monotonically with the write fraction, because write performance dominates the total.
-
-{\color{blue}
-For large $bs$, sequential and random access converge to within 10\% for both reads and writes, suggesting that DAOS saturates its internal striping parallelism regardless of access order at coarse transfer granularities. In contrast, for small block sizes (4 and 16~KiB), random access outperforms sequential by 3--6$\times$, with the gap most pronounced in read-dominated patterns. For instance, at 4~KiB under a read-only workload, random achieves 2.8~GiB/s while sequential reaches only 0.5~GiB/s. The same disparity appears for small-block writes: random 16~KiB reaches 19.2~GiB/s write-only versus 4.9~GiB/s for sequential. This behavior suggests that at fine granularities, \textit{fio} random I/O distributes load more evenly across DAOS storage targets, whereas small sequential requests may serialize within a single target or fail to exploit cross-target striping effectively.
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=1\linewidth]{figures/fio-read-boxplot.pdf}
 
     \vspace{-1em}
-    \caption{Boxplot of \textit{fio} sequential-read ($iod$/$nj$=16) throughput on Sys-B.}
+    \caption{Boxplot of \textit{fio} read-only ($iod$/$nj$=16) throughput on Sys-B.}
     \label{fig:fio-read-boxplot}
 \end{figure}
 
 
-Read throughput also exhibits notable run-to-run variability. At small block sizes, sequential-read variability stays within 2.0\%, while random reads reach up to 12.4\%. At large block sizes, variability rises above 15\%; sequential reads are more variable than random, peaking at 22.8\% at $bs{=}$2~MiB. Fig.~\ref{fig:fio-read-boxplot} shows the bandwidth distribution for both access patterns, highlighting three outlier runs in sequential reads at $bs{=}$2 and 4~MiB whose throughput is nearly half the median.
+Fig.~\ref{fig:fio-all-pattern} shows the 10-run median throughput of five \textit{fio} read/write mix workloads ($iod$/$nj$=16) across five block sizes on Sys-B. Write throughput substantially outperforms read: for large block sizes ($bs \geq$1~MiB), write-only saturates at 22.4--22.9~GiB/s whereas read-only plateaus near 4.6~GiB/s, a roughly 5$\times$ asymmetry. The aggregate throughput of each read/write mix scales monotonically with the write fraction, since write performance dominates the total. 
 
-}
+
+For $bs\geq$ 2~MiB, sequential and random access converge to within 7\% for all the mixes, indicating that I/O requests at coarse granularity are insensitive to access order. At small block sizes, by contrast, throughput depends heavily on it. At $bs$=4~KiB, read-related throughput under sequential access is 2--6$\times$ that of random, despite sequential write-only throughput is only 53\% of random. At $bs$=16~KiB, write-only shows a 73\% gap between random and sequential access, while the other mixes stay within 18\%. Overall, small-block I/O is consistently order-sensitive, and the direction differs by task: reads favor sequential access, and writes favor random. 
+
+
+
+
+
+Read-only also exhibits the largest run-to-run variability of the five mixes: except for random read at $bs$=4~KiB, all other read-only mixes show 11--20\% variation. Fig.~\ref{fig:fio-read-boxplot} shows the bandwidth distribution for both read-only access patterns, where the boxes indicate the 25th/75th percentiles and the whiskers denote the min and max, highlighting that the lowest throughput can be as low as half of the median.
+
+
+\textbf{Takeaway:} Writes outperform reads regardless of block size. Access order matters at small block sizes, where sequential access favors reads and random access favors writes. Read-only throughput is also markedly less stable than write-dominated mixes.
 
 
 \subsection{DAOS vs.\ NFS}
 
 
-\begin{figure*}[thbp]
+\begin{figure}[t]
     \centering
-    \includegraphics[width=1\linewidth]{figures/fio-cmp_bw-meanlat-cpu.pdf}
+    \includegraphics[width=1\linewidth]{figures/fio-cmp_dfs-pvsync2_bw-cpu.pdf}
 
     \vspace{-1em}
     \caption{Comparison between DAOS and NVMe-based NFS on Sys-B.}
     \label{fig:daos-vs-nsf}
-\end{figure*}
+\end{figure}
 
-We read the same file using single-process \textit{fio} sequential reads under three scenarios: (1) DAOS with the \texttt{dfs} engine; (2) NFS with the asynchronous I/O engine \texttt{libaio}; and (3) NFS with the synchronous engine \texttt{pvsync2}. Scenarios (1) and (2) use an I/O queue depth of 32.Fig.~\ref{fig:daos-vs-nsf} reports the throughput, mean latency, and CPU usage across these scenarios; each value is the median of 10 runs. Compared to DAOS, NFS is insensitive to block size, 
+We copy a 28~GiB file from the NFS-mounted volume to a DAOS POSIX container and use single-process \textit{fio} to measure sequential-read throughput under two scenarios: (1) DAOS with the \texttt{dfs} engine ($iod$=32); and (2) NFS with the \texttt{pvsync2} engine. For both scenarios, \textit{fio} terminates as soon as it completes a single full read of the file. Fig.~\ref{fig:daos-vs-nsf} reports the throughput and CPU usage across both scenarios; each value is the median of 10 runs.
 
+NFS bandwidth is largely insensitive to block size: it varies only slightly, from 0.62 to 0.83~GiB/s across the three tested block sizes. DAOS, by contrast, delivers 10.3--10.6~GiB/s at $bs\geq$1~MiB, over 10$\times$ higher than NFS, but collapses to 0.33~GiB/s at $bs$=4~KiB, almost half of the NFS throughput.
 
+Similar to throughput, CPU usage stays within a narrow range for NFS (59.7--69.3\%). DAOS's CPU usage spikes to 99.5\% at $bs$=4~KiB, compared to 60.7--62.8\% at larger $bs$, clearly indicating it becomes CPU-bound at small block sizes.
 
-
-
+\textbf{Takeaway:} At or above the 1~MiB I/O request size, DAOS outperforms NFS by an order of magnitude in throughput while using less CPU. At small block sizes, DAOS's single-target IOPS bottleneck saturates the CPU and its throughput can be worse than NFS (on Sys-B).
 
 
