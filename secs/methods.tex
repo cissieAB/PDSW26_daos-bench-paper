@@ -24,42 +24,44 @@ Table~\ref{tab:platform-cmp} summarizes the key specifications of both systems. 
 
 \subsubsection{I/O Concurrency}
 
-In a scientific streaming system such as E2SAR \cite{e2sar-github}, multiple data streams are produced and consumed simultaneously, placing high concurrent I/O demand. We study two dimensions of this concurrency: intra-node concurrency, where a single client node issues multiple parallel I/O requests using \textit{fio}; and inter-node horizontal scaling, where multiple client nodes access DAOS simultaneously, evaluated with IOR.
+In a scientific streaming system such as E2SAR \cite{e2sar-github}, multiple data streams are produced and consumed simultaneously, placing high concurrent I/O demand. We study two dimensions of this concurrency: intra-node concurrency, where a single client node issues multiple parallel I/O requests using \textit{fio}; and node-level scaling, where multiple client nodes access DAOS simultaneously, evaluated with IOR.
 
-The \textit{fio} task concurrency is controlled by two parameters: the number of jobs (denoted $nj$), where each job runs as a separate process that issues I/O requests, and the I/O queue depth (denoted $iod$), which specifies how many I/O requests each process can have in flight simultaneously. For asynchronous I/O engines such as \texttt{dfs}, the product $nj \times iod$ determines the overall concurrency level; synchronous engines such as \texttt{pvsync2} issue one blocking request at a time regardless of $iod$, reducing effective concurrency to $nj$ alone. In addition, the block size (denoted $bs$) defines the granularity of each I/O request and substantially influences both throughput and latency. We systematically vary these parameters using the \texttt{dfs} engine across three experiment designs:
+The \textit{fio} task concurrency is controlled by two parameters: the number of jobs (denoted $nj$), where each job runs as a separate process that issues I/O requests, and the I/O queue depth (denoted $iod$), which specifies how many I/O requests each process can have in flight simultaneously. For asynchronous I/O engines such as \texttt{dfs}, the product $nj * iod$ determines the overall concurrency level. Synchronous engines, such as \texttt{pvsync2}, issue one blocking request at a time, regardless of $iod$. In addition, the granularity of each I/O request (fio's \texttt{bs} flag, denoted $rs$ to unify with IOR's transfer size \texttt{-t}) substantially influences both throughput and latency. We systematically vary these parameters using the \texttt{dfs} engine across three experiment designs:
 
 \begin{enumerate}[label=(\alph*)]
-    \item Single-process, sweep $bs$ and $iod$. The tested block sizes are 4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB, corresponding to the CPU page size, the modern GPU page size, the DAOS POSIX container chunk size, the huge page size, and bulk transfers, respectively.
-    \item Fix $iod$, sweep $nj$ and $bs$. This characterizes the effect of process-level parallelism across block sizes.
-    \item Fix total concurrency ($nj \times iod$) and $bs$, sweep the $nj/iod$ split. This quantifies how concurrency structure affects tail latency at similar throughput.
+    \item Single-process, sweep $rs$ and $iod$. The tested block sizes are 4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB, corresponding to the CPU page size, the modern GPU page size, the DAOS POSIX container chunk size, the huge page size, and bulk transfers, respectively.
+    \item Fix $iod$, sweep $nj$ and $rs$. This characterizes the effect of process-level parallelism across I/O request sizes.
+    \item Fix total concurrency ($nj \times iod$) and $rs$, sweep the $nj/iod$ split. This quantifies how concurrency structure affects tail latency at similar throughput.
 \end{enumerate}
 
-For inter-node scalability, we run MPI \texttt{ior} processes across up to 128 DAOS client nodes, with each process issuing sequential I/O requests of a fixed transfer size. We sweep the number of nodes and MPI processes per node (PPN), reporting aggregated read and write bandwidth. These results reveal the throughput limit to scientific streaming pipelines at scale.
+For inter-node scalability, we run MPI \texttt{ior} processes across up to 128 DAOS client nodes, with each process issuing sequential I/O requests of a fixed $rs$. We sweep the number of nodes and MPI processes per node (PPN), reporting aggregated read and write bandwidth. These results reveal the throughput limit to scientific streaming pipelines at scale.
 
 
 
 \subsubsection{DAOS POSIX Container Access Approaches}
 
-Mounting a DAOS POSIX container via \textit{dfuse} is the most portable approach, allowing unmodified POSIX applications to access DAOS through standard filesystem interfaces. However, dfuse incurs overhead on every operation. To quantify this overhead, we evaluate \textit{fio} and IOR with three POSIX container access approaches on Sys-A:
+Mounting a DAOS POSIX container via \textit{dfuse} is the most portable approach, allowing unmodified POSIX applications to access DAOS through standard Linux filesystem interfaces, at the cost of an overhead on every operation. To quantify this overhead, we evaluate \textit{fio} and IOR with three POSIX container access approaches on Sys-A:
 
 \begin{enumerate}[label=(\alph*)]
 
-\item dfuse: Mount the DAOS POSIX container via \textit{dfuse} and access it through \textit{fio}/IOR's POSIX engine.
+\item POSIX: Mount the DAOS POSIX container via \textit{dfuse} and access it through \textit{fio}/IOR's POSIX engine.
 
-\item dfuse + IL: Same as (a), but with DAOS interception library (IL) \texttt{libioil} or \texttt{libpil4dfs} preloaded.
+\item IL: Same as (a), but with DAOS interception library (IL) \texttt{libioil} or \texttt{libpil4dfs} preloaded.
 
-\item dfs: Use \textit{fio} or IOR's native \texttt{dfs} access, bypassing \textit{dfuse} entirely.
+\item DFS: Use native \texttt{dfs} access, bypassing \textit{dfuse} entirely.
 
 \end{enumerate}
 
 
-\subsubsection{Read/Write Patterns}
+\subsubsection{Access Patterns}
 
-In traditional filesystems, sequential access significantly outperforms random. DAOS narrows this gap through its log-structured storage engine and byte-addressable object store. To investigate this effect, we benchmark \textit{fio} across five read/write mixes, where reads and writes are issued concurrently in the mixed cases: (1) read-only; (2) read-heavy (20\% write); (3) balanced (50\% write); (4) write-heavy (80\% write); and (5) write-only, each tested under both random and sequential access patterns.
+In traditional filesystems, sequential access significantly outperforms random. DAOS narrows this gap through its log-structured storage engine and byte-addressable object store. To investigate this effect, we benchmark \textit{fio} across five read/write mixes, where read and write I/O requests are issued simultaneously: (1) read-only; (2) read-heavy (20\% write); (3) balanced (50\% write); (4) write-heavy (80\% write); and (5) write-only, each tested under both random and sequential access. These five mixes also mirror the distinct stages of a scientific streaming workflow: write-only and write-heavy configurations correspond to data ingestion, where detectors or simulations produce data at high rates; balanced and read-heavy configurations represent concurrent online analysis, where processed and raw data coexist; and read-only configurations reflect post-processing or visualization stages.
 
-These five mixes also mirror the distinct stages of a scientific streaming workflow: write-only and write-heavy configurations correspond to data ingestion, where detectors or simulations produce data at high rates; balanced and read-heavy configurations represent concurrent online analysis, where processed and raw data coexist; and read-only configurations reflect post-processing or visualization stages.
+\textcolor{blue}{
+In addition,
+}
 
 
 \subsection{DAOS vs.\ Other Storage Systems}
 
-The client node of Sys-B also has access to a remote NVMe-based storage node via the Network File System (NFS) over TCP/IP on a 100~Gbps Ethernet fabric. Comparing DAOS to this NFS on Sys-B quantifies the performance gap between a conventional file-sharing stack and a modern object store with native RDMA transport. To avoid confounding the comparison with the peak-bandwidth difference between the 100~Gbps Ethernet and 200~Gbps InfiniBand fabrics, we restrict the test to a single process, keeping throughput well below the theoretical peak of either fabric.
+The client node of Sys-B also has access to a remote NVMe-based storage node via the Network File System (NFS, v4.2) over TCP/IP on a 100~Gbps Ethernet fabric. Comparing DAOS to this NFS on Sys-B quantifies the performance gap between a conventional file-sharing stack and a modern object store with native RDMA transport. To avoid confounding the comparison with the peak-bandwidth difference between the 100~Gbps Ethernet and 200~Gbps InfiniBand fabrics, we restrict the test to a single process, keeping throughput well below the theoretical peak of either fabric.

@@ -1,19 +1,16 @@
 \section{Conclusions and Future Work}
 \label{sec:conclusion}
 
-\textcolor{blue}{
-This paper presented a benchmarking study of DAOS across two production-representative platforms, Aurora's exascale-class deployment and a smaller DRAM/InfiniBand testbed, targeting the concurrency and access patterns of scientific streaming workloads.
-Our results show that I/O concurrency behaves differently depending on access granularity: block size, rather than queue depth or process count, dominates single-process throughput, and large-block accesses saturate the network with far fewer processes than small-block accesses require. At fixed total concurrency, the split between per-process queue depth and process count strongly shapes tail latency even when mean throughput is unaffected, showing that concurrency \emph{structure}, not just its magnitude, is a first-order tuning knob for latency-sensitive streaming pipelines. At cluster scale, DAOS scales near-linearly to multi-TiB/s aggregate bandwidth with only tens of client nodes, and write throughput exceeds read throughput at the process counts typical of streaming ingestion.
+{\color{blue}
+
+Our results show that I/O concurrency behaves differently depending on access granularity: I/O request size, rather than queue depth or process count, dominates single-process throughput, and large accesses saturate the network with far fewer processes than small-block accesses require. At fixed total concurrency, the split between per-process queue depth and process count strongly shapes tail latency even when mean throughput is unaffected, showing that concurrency structure, not just its magnitude, is a first-order tuning knob for latency-sensitive streaming pipelines. At cluster scale, DAOS scales near-linearly to multi-TiB/s aggregate bandwidth with only tens of client nodes, and write throughput exceeds read throughput at the process counts typical of streaming ingestion.
+
+
+We further find that the choice of POSIX access method materially affects delivered performance: bare \textit{dfuse} mounts substantially underperform DAOS's native \texttt{dfs} interface, while the interception library \texttt{libpil4dfs} can recover, and even exceed, native performance for parallel \texttt{ior} workloads. Our read/write mix experiments show that DAOS writes consistently outperform reads, that small-block access is sensitive to access order (sequential access favors reads, random access favors writes), and that read throughput exhibits substantially higher run-to-run variability than write-dominated workloads. Finally, our comparison against NFS shows that DAOS's RDMA-based transport delivers an order-of-magnitude throughput advantage at or above the 1~MiB I/O size while consuming less CPU, though this advantage narrows and can invert once the workload becomes small-block and single-target IOPS-bound.
 }
 
-\textcolor{blue}{
-We further find that the choice of POSIX access method materially affects delivered performance: bare \textit{dfuse} mounts substantially underperform DAOS's native \texttt{dfs} interface, while the interception library \texttt{libpil4dfs} can recover, and even exceed, native performance for parallel \texttt{ior} workloads. Our read/write mix experiments show that DAOS writes consistently outperform reads, that small-block access is sensitive to access order (sequential access favors reads, random access favors writes), and that read throughput exhibits substantially higher run-to-run variability than write-dominated workloads. Finally, our comparison against NFS shows that DAOS's RDMA-based transport delivers an order-of-magnitude throughput advantage at or above the 1~MiB I/O size while consuming less CPU, though this advantage narrows, and can invert, once the workload becomes small-block and single-target IOPS-bound.
-}
 
-\textcolor{blue}{
-Together, these findings offer concrete guidance for deploying DAOS in scientific streaming systems such as E2SAR: favor native \texttt{dfs} or interception-library access over bare POSIX, batch small I/O requests toward the 1~MiB DAOS chunk size where possible, and size process/queue-depth concurrency according to whether throughput or tail latency is the binding constraint.
-}
+Together, these findings offer concrete guidance for utilizing DAOS in scientific streaming systems: favor native \texttt{dfs} or interception-library access over bare POSIX, batch small I/O requests toward the 1~MiB DAOS chunk size where possible, and size process/queue-depth concurrency according to whether throughput or tail latency is the binding constraint.
 
-\textcolor{blue}{
-In future work, we plan to extend this study in three directions. First, we will profile server-side engine threads and PMem/DRAM-versus-NVMe tiering decisions as concurrency scales, to attribute the observed bottlenecks to DAOS-specific overheads rather than fabric- or device-level limits. Second, we will broaden our workload coverage beyond synthetic \textit{fio}/IOR benchmarks to end-to-end scientific streaming pipelines such as E2SAR, quantifying the gap between micro-benchmark peaks and realized application performance. Third, we will compare DAOS against additional storage backends and access layers, including kernel-bypass alternatives such as SPDK and NVMe-oF, to better delineate where DAOS's userspace, asynchronous, object-based design provides a genuine advantage over well-tuned conventional parallel file systems.
-}
+
+In future work, we plan to extend this study in three directions. First, we will broaden our workload coverage beyond synthetic \textit{fio}/IOR benchmarks to end-to-end scientific streaming pipelines, quantifying the gap between micro-benchmark peaks and realized application performance.

@@ -6,15 +6,6 @@ In the latest IO500 Production list (ICS26), 2 of the top-5 storage systems run 
 Since the initial deployment in 2020, several prior works have studied DAOS's performance \cite{daos-intro2020, daos-vs-lustre2022pdsw, daos-dram-intro2023, daos-arm2023SCAsia, daos-scalability2023SCAsia, daos-perf-explore2024scw, DAOS-aurora-20-node-test2024scw, mei2024sc-poster, daos-smartnic2025scw}. 
 
 
-\textcolor{blue}{
-Benchmarking objectives.
-In this paper, we present a comprehensive performance benchmark of DAOS, evaluating its I/O throughput, latency, and scalability under various workloads and configurations. We compare DAOS with traditional storage systems to highlight its advantages and identify potential bottlenecks. Our results demonstrate that DAOS can significantly improve I/O performance in HPC and LLM applications, making it a compelling choice for future storage solutions.
-}
 
-\textcolor{blue}{
-Our benchmarking targets the concurrency and access patterns of a scientific streaming workflow, in which many I/O streams are concurrently ingested, analyzed, and read back. We evaluate DAOS on two production-representative platforms of very different scale, Aurora's exascale-class deployment and a small DRAM/InfiniBand testbed, sweeping I/O concurrency, POSIX access approach, and read/write mix, and comparing DAOS against NFS. Our results show that block size, rather than process or queue-depth concurrency, dominates single-process throughput; that native \texttt{dfs} or interception-library access is needed to avoid the substantial overhead of bare \textit{dfuse} mounts; and that DAOS scales near-linearly to multi-TiB/s bandwidth while outperforming NFS by an order of magnitude at sufficiently large I/O sizes. These results translate into concrete configuration guidance for deploying DAOS in concurrent, high-throughput streaming pipelines such as E2SAR.
-}
 
-\textcolor{blue}{
-The remainder of this paper is organized as follows. Section~\ref{sec:background} reviews the DAOS architecture and prior performance studies. Section~\ref{sec:methods} describes our experimental platforms and benchmark configurations. Section~\ref{sec:results} presents our I/O concurrency, POSIX access, read/write pattern, and DAOS-vs-NFS results. Section~\ref{sec:conclusion} concludes the paper and discusses future work.
-}
+The remainder of this paper is organized as follows. Section~\ref{sec:background} reviews the DAOS architecture and prior performance studies. Section~\ref{sec:methods} describes our experimental platforms and benchmark configurations. Section~\ref{sec:results} presents our measurement results. Section~\ref{sec:conclusion} concludes the paper and discusses future work.
