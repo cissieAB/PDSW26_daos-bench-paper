@@ -3,43 +3,48 @@
   \caption{Specifications of the Experimental DAOS Platforms}
   \label{tab:platform-cmp}
   \renewcommand{\arraystretch}{1.1}
-  \begin{tabular}{|p{6.6em} |p{9.8em} | p{9.8em}|}
+  \begin{tabular}{|p{7em} |p{9.6em} | p{9.6em}|}
     \hline
     \multicolumn{3}{|c|}{ \textbf{\textit{Storage Node}}} \\
     \hline
-    \textbf{Platform} & \textbf{Aurora (Sys-A)} & \textbf{Our Testbed (Sys-B)}
+    \textbf{Specification} & \textbf{Aurora (Sys-A)} & \textbf{Our Testbed (Sys-B)}
     \\
     \hline
     CPU (Base/Max Clock)
-      & 2$\times$ Intel Xeon 5320 \newline (2.2/3.4~GHz)
-      & 2$\times$ Intel Xeon 6438Y \newline (2.0/4.0~GHz)
+      & 2 $\times$ Intel Xeon 5320 \newline (2.2/3.4~GHz)
+      & 2 $\times$ Intel Xeon 6438Y \newline (2.0/4.0~GHz)
     \\
     \hline
     NICs
-      & 2$\times$ 200~Gbps, Slingshot-11 Ethernet
-      & 2$\times$ 200~Gbps, ConnectX-6 InfiniBand
+      & 2 $\times$ 200~Gbps, Slingshot-11 Ethernet
+      & 2 $\times$ 200~Gbps, ConnectX-6 InfiniBand
     \\
     \hline
     First-tier storage
-      & 16$\times$ 512~GB Intel Optane PMem
-      & 2$\times$ 256~GB DRAM
+      & 16 $\times$ 512~GB Intel Optane PMem
+      & 2 $\times$ 256~GB DRAM
     \\ \hline
     NVMe
-      & 16$\times$ 15.3~TB
-      & 8$\times$ 3.8~TB (bulk data), 2$\times$ 800~GB (WAL) \\
+      & 16 $\times$ 15.3~TB
+      & 8 $\times$ 3.8~TB (bulk data), 2 $\times$ 800~GB (WAL) \\
     \hline
     % Client node
     \hline
     \multicolumn{3}{|c|}{ \textbf{\textit{Client Node}}} \\
     \hline 
      CPU \newline (Base Clock)
-      & 2$\times$ Intel Xeon 9470 52-core (2.0~GHz)
-      & 2$\times$ AMD EPYC 7763 64-core (2.45~GHz)
+      & 2 $\times$ Intel Xeon 9470 52-core (2.0~GHz)
+      & 2 $\times$ AMD EPYC 7763 64-core (2.45~GHz)
     \\
     \hline
     NICs
       & 8 $\times$ 200~Gbps, Slingshot-11 Ethernet
       & 1 $\times$ 200~Gbps, ConnectX-6 InfiniBand
+    \\
+    \hline
+    POSIX container defaults
+      & \texttt{rd\_fac}=3, \texttt{chunk\_size}=2~MiB
+      & \texttt{rd\_fac}=0, \texttt{chunk\_size}=1~MiB
     \\
     \hline
   \end{tabular}
