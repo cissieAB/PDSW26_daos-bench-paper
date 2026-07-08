@@ -97,7 +97,7 @@ Although \texttt{ior} read throughput eventually surpasses write throughput, the
     \label{fig:access-cmp}
 \end{figure}
 
-Fig.~\ref{fig:access-cmp} compares the 10-run median throughput of identical \textit{fio} and \texttt{ior} workloads across three DAOS container access methods on Sys-A. For \textit{fio}, we run \texttt{randwrite} with $iod$/$nj$=16 using the \texttt{pvsync2} and \texttt{dfs} engines. The \texttt{ior} workload is read-after-write with PPN=48 and $rs$=2~MiB. Since \texttt{libpil4dfs} fails the \textit{fio} runs, we fall back to the legacy \texttt{libioil}.
+Fig.~\ref{fig:access-cmp} compares the 10-run median throughput of identical \textit{fio} and \texttt{ior} workloads across three DAOS container access methods on Sys-A. For \textit{fio}, we run \texttt{randwrite} with $nj$=$iod$=16 using the \texttt{pvsync2} and \texttt{dfs} engines. The \texttt{ior} workload is read-after-write with PPN=48 and $rs$=2~MiB. Since \texttt{libpil4dfs} fails the \textit{fio} runs, we fall back to the legacy \texttt{libioil}.
 
 
 POSIX via \textit{dfuse} delivers substantially lower throughput than DFS across all three workloads. For \texttt{ior} write, the throughput gap is as large as 0.8 vs.\ 133.7~GiB/s; \textit{fio} similarly shows 39.3 vs.\ 88.1~GiB/s. The interception library \texttt{libpil4dfs} significantly accelerates \texttt{ior} POSIX access, enabling IL throughput to outperform DFS by 14--30\%, at the cost of a much larger performance range. \texttt{libioil}, however, degrades \textit{fio} throughput to one-third of the POSIX baseline.
@@ -114,7 +114,7 @@ POSIX via \textit{dfuse} delivers substantially lower throughput than DFS across
     \includegraphics[width=1\linewidth]{figures/fio-bw-all-pattern-nj16-iod16.pdf}
 
     \vspace{-1em}
-    \caption{Bandwidth under different \textit{fio} read/write mixes ($iod$/$nj$=16) on Sys-B.}
+    \caption{Bandwidth under different \textit{fio} read/write mixes ($nj$=$iod$=16) on Sys-B.}
     \label{fig:fio-all-pattern}
 \end{figure}
 
@@ -123,12 +123,12 @@ POSIX via \textit{dfuse} delivers substantially lower throughput than DFS across
     \includegraphics[width=1\linewidth]{figures/fio-read-boxplot.pdf}
 
     \vspace{-1em}
-    \caption{Boxplot of \textit{fio} read-only ($iod$/$nj$=16) throughput on Sys-B.}
+    \caption{Boxplot of \textit{fio} read-only ($nj$=$iod$=16) throughput on Sys-B.}
     \label{fig:fio-read-boxplot}
 \end{figure}
 
 
-Fig.~\ref{fig:fio-all-pattern} shows the 10-run median throughput of \textit{fio} read/write mix workloads ($iod$/$nj$=16) across five I/O request sizes on Sys-B. Write throughput substantially outperforms read. For $rs \geq$1~MiB, write-only saturates at 22.4--22.9~GiB/s whereas read-only plateaus near 4.6~GiB/s, a roughly 5$\times$ asymmetry. The aggregate throughput for each read/write mix scales monotonically with the write fraction, since write performance dominates the total. 
+Fig.~\ref{fig:fio-all-pattern} shows the 10-run median throughput of \textit{fio} read/write mix workloads ($nj$=$iod$=16) across five I/O request sizes on Sys-B. Write throughput substantially outperforms read. For $rs \geq$1~MiB, write-only saturates at 22.4--22.9~GiB/s whereas read-only plateaus near 4.6~GiB/s, a roughly 5$\times$ asymmetry. The aggregate throughput for each read/write mix scales monotonically with the write fraction, since write performance dominates the total. 
 
 
 When $rs\geq$ 2~MiB, sequential and random access converge to within 7\% for all the mixes, indicating that I/O requests at coarse granularity are insensitive to access order. At small I/O request sizes, by contrast, throughput depends heavily on it. At $rs$=4~KiB, read-related throughput under sequential access is 2--6$\times$ that of random, despite sequential write-only throughput being only 53\% of random. At $rs$=16~KiB, write-only throughput shows a 73\% gap between random and sequential access, while the other mixes stay within 18\%. Overall, small I/O size is consistently order-sensitive, and the direction varies by operation -- reads favor sequential access, and writes favor random. 
