@@ -74,7 +74,7 @@ In \textit{fio} reports, latency is further broken down into submission latency 
     \label{fig:ior-scaling}
 \end{figure}
 
-We evaluate \texttt{ior} read-after-write workloads (parameter \texttt{-rw}) on Sys-A using the \texttt{dfs} access method. Despite DAOS POSIX containers on Sys-A default to a redundancy factor (\texttt{rd\_fac}) of 3, we set it to 0 to maximize throughput. Following \cite{DAOS-aurora-20-node-test2024scw}, we bind MPI processes to CPU cores using the breadth-skip method.
+We evaluate \texttt{ior} read-after-write workloads (parameter \texttt{-wr}) on Sys-A using the \texttt{dfs} access method. Despite DAOS POSIX containers on Sys-A defaulting to a redundancy factor (\texttt{rd\_fac}) of 3, we set it to 0 to maximize throughput. Following \cite{DAOS-aurora-20-node-test2024scw}, we bind MPI processes to CPU cores using the breadth-skip method.
 
 We examine PPN\,=\,8,\,16,\,32,\,48 and $rs$ of 2~MiB and 16~MiB, with the \texttt{dfs} chunk size set to 2~MiB. Although the runs are submitted as many separate HPC jobs and thus execute on different sets of nodes ($n\geq64$), run-to-run throughput variability remains within 11\% for all workloads.
 
@@ -114,7 +114,7 @@ POSIX via \textit{dfuse} delivers substantially lower throughput than DFS across
     \includegraphics[width=1\linewidth]{figures/fio-bw-all-pattern-nj16-iod16.pdf}
 
     \vspace{-1em}
-    \caption{Bandwidth under different \textit{fio} read/write mixes ($nj$=$iod$=16) on Sys-B.}
+    \caption{Throughput for different \textit{fio} read/write mixes ($nj$=$iod$=16) on Sys-B.}
     \label{fig:fio-all-pattern}
 \end{figure}
 
@@ -157,5 +157,5 @@ We copy a 28~GiB file from the NFS-mounted volume to a DAOS POSIX container and 
 
 NFS bandwidth is largely insensitive to \textit{fio} I/O request size. It varies only slightly from 0.62 to 0.83~GiB/s across the three tested $rs$, with tightly clustered runs. DAOS, by contrast, delivers a median of 10.3--10.6~GiB/s at $rs\geq$1~MiB, over 10$\times$ higher than NFS, but collapses to 0.33~GiB/s at $rs$=4~KiB, almost half of NFS's throughput. The per-run dots further reveal that DAOS throughput at $rs\geq$1~MiB is bimodal: 3 of the 10 runs form a ``cold'' cluster with a median of 2.9~GiB/s, while the remaining 7 ``warm'' runs reach 10.9 and 10.4~GiB/s at $rs$=1 and 4~MiB, respectively, a 3.5--3.7$\times$ gap. Similar to throughput, CPU usage stays within a narrow range for NFS (59.7--69.3\%). DAOS's CPU usage spikes to 99.5\% at $rs$=4~KiB, compared to 60.7--62.8\% at larger $rs$, clearly indicating a CPU-bound scenario at small I/O request sizes.
 
-\textbf{Takeaway:} At or above the 1~MiB I/O request size, DAOS outperforms NFS by an order of magnitude in throughput with lower CPU usage. At small I/O request sizes, DAOS's IOPS bottleneck saturates the client CPU, and its throughput on Sys-B can even fall below that of NFS.
+\textbf{Takeaway:} At or above the 1~MiB I/O request size, DAOS outperforms NFS by an order of magnitude in throughput with lower CPU utilization. At small I/O request sizes, DAOS's IOPS bottleneck saturates the client CPU, and its throughput on Sys-B can even fall below that of NFS.
 
