@@ -10,7 +10,7 @@ We further find that the choice of POSIX access method materially affects delive
 }
 
 
-Together, these findings offer concrete guidance for utilizing DAOS in scientific streaming systems: favor native \texttt{dfs} or interception-library access over bare POSIX, batch small I/O requests toward the 1~MiB DAOS chunk size where possible, and size process/queue-depth concurrency according to whether throughput or tail latency is the binding constraint.
+Together, these findings offer concrete guidance for using DAOS in scientific streaming systems: favor native \texttt{dfs} or interception-library access over bare POSIX, batch small I/O requests toward the 1~MiB DAOS chunk size where possible, and size process/queue-depth concurrency according to whether throughput or tail latency is the binding constraint.
 
 
 In future work, we plan to extend this study in three directions. First, we will broaden our workload coverage beyond synthetic \textit{fio}/IOR benchmarks to end-to-end scientific streaming pipelines, quantifying the gap between micro-benchmark peaks and realized application performance.

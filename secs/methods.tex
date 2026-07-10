@@ -7,14 +7,14 @@
 
 
 \subsubsection{Aurora}
-Aurora is Argonne National Laboratory's exascale supercomputer with 10,624 compute nodes \cite{aurora-intro2025}. It currently has the largest DAOS deployment in production, comprising 1,024 storage nodes \cite{aurora-daos-slingshot-rpc2025cug, io500-isc26}. We were allocated a 100~TB DAOS pool under the \texttt{daos\_user} group. Per the Aurora user guide \cite{daos-aurora-guide} and our system queries, this group spans 128\footnote{Only 126--127 nodes were active during the experiments. } storage nodes, each with 16 PMem devices and 2 200~Gbps Slingshot-11 Ethernet NICs.
+Aurora is Argonne National Laboratory's exascale supercomputer with 10,624 compute nodes \cite{aurora-intro2025}. It currently has the largest DAOS deployment in production, comprising 1,024 storage nodes \cite{aurora-daos-slingshot-rpc2025cug, io500-isc26}. We were allocated a 100~TB DAOS pool under the \texttt{daos\_user} group. Per the Aurora user guide \cite{daos-aurora-guide} and our system queries, this group spans 128\footnote{Only 126--127 nodes were active during the experiments.} storage nodes, each with 16 PMem devices and two 200~Gbps Slingshot-11 Ethernet NICs.
 
 
-Aurora deploys a large-scale Dragonfly network topology \cite{aurora-intro2025, daos-aurora-guide}. Its 1,024 DAOS storage nodes span 64 racks organized into 8 Dragonfly groups, while client nodes are distributed across 166 groups. Cross-group traffic traverses multiple network hops, thus partially explaining the bandwidth difference between our results and \cite{DAOS-aurora-20-node-test2024scw}, which used identical node specifications but a simpler network topology.
+Aurora deploys a large-scale Dragonfly network topology \cite{aurora-intro2025, daos-aurora-guide}. Its 1,024 DAOS storage nodes span 64 racks organized into 8 Dragonfly groups, while client nodes are distributed across 166 groups. Cross-group traffic traverses multiple network hops, thus partially explaining the bandwidth difference between our results and those of \cite{DAOS-aurora-20-node-test2024scw}, which used identical node specifications but a simpler network topology.
 
 
 \subsubsection{Our Testbed}
-We operate a DAOS testbed comprising 3 storage nodes. Unlike Aurora, this testbed uses DRAM as the first-tier storage and InfiniBand as the interconnect. A single DAOS client node accesses it via a 200~Gbps (23.3 GiB/s) link. The server and client nodes are connected to the same InfiniBand switch, ensuring low-latency RDMA access.
+We operate a DAOS testbed comprising 3 storage nodes. Unlike Aurora, this testbed uses DRAM as the first-tier storage and InfiniBand as the interconnect. A single DAOS client node accesses it via a 200~Gbps (23.3~GiB/s) link. The server and client nodes are connected to the same InfiniBand switch, ensuring low-latency RDMA access.
 
 \input{tables/platform-spec.tex}
 
@@ -24,9 +24,9 @@ Table~\ref{tab:platform-cmp} summarizes the key specifications of both systems. 
 
 \subsubsection{I/O Concurrency}
 
-In a scientific streaming system, multiple data streams are produced and consumed simultaneously, placing high concurrent I/O demand. We study two dimensions of this concurrency: intra-node concurrency, where a single client node issues multiple parallel I/O requests using \textit{fio}; and node-level scaling, where multiple client nodes access DAOS simultaneously, evaluated with IOR.
+In a scientific streaming system, multiple data streams are produced and consumed simultaneously, imposing high concurrent I/O demands. We study two dimensions of this concurrency: intra-node concurrency, where a single client node issues multiple parallel I/O requests using \textit{fio}; and node-level scaling, where multiple client nodes access DAOS simultaneously, evaluated with IOR.
 
-The \textit{fio} task concurrency is controlled by two parameters: the number of jobs (denoted $nj$), where each job runs as a separate process that issues I/O requests, and the I/O queue depth (denoted $iod$), which specifies how many I/O requests each process can have in flight simultaneously. For asynchronous I/O engines such as \texttt{dfs}, the product $nj \times iod$ determines the overall concurrency level. Synchronous engines, such as \texttt{pvsync2}, issue one blocking request at a time, regardless of $iod$. In addition, the granularity of each I/O request (fio's \texttt{bs} flag, denoted $rs$ to unify with IOR's transfer size \texttt{-t}) substantially influences both throughput and latency. We systematically vary these parameters using the \texttt{dfs} engine across three experiment designs:
+The \textit{fio} task concurrency is controlled by two parameters: the number of jobs (denoted $nj$), where each job runs as a separate process that issues I/O requests, and the I/O queue depth (denoted $iod$), which specifies how many I/O requests each process can have in flight simultaneously. For asynchronous I/O engines such as \texttt{dfs}, the product $nj \times iod$ determines the overall concurrency level. Synchronous engines, such as \texttt{pvsync2}, issue one blocking request at a time, regardless of $iod$. In addition, the granularity of each I/O request (\textit{fio}'s \texttt{bs} flag, denoted $rs$ to unify with IOR's transfer size \texttt{-t}) substantially influences both throughput and latency. We systematically vary these parameters using the \texttt{dfs} engine across three experiment designs:
 
 \begin{enumerate}[label=(\alph*)]
     \item Single-process, sweep $rs$ and $iod$. The tested request sizes are 4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB, corresponding to the CPU page size, the modern GPU page size, the DAOS POSIX container chunk size, the huge page size, and bulk transfers, respectively.
@@ -34,19 +34,19 @@ The \textit{fio} task concurrency is controlled by two parameters: the number of
     \item Fix total concurrency ($nj \times iod$) and $rs$, sweep the $nj/iod$ split. This quantifies how concurrency structure affects tail latency at similar throughput.
 \end{enumerate}
 
-For inter-node scalability, we run MPI \texttt{ior} processes across up to 128 DAOS client nodes, with each process issuing sequential I/O requests of a fixed $rs$. We sweep the number of nodes and MPI processes per node (PPN), reporting aggregated read and write bandwidth. These results reveal the throughput limit to scientific streaming pipelines at scale.
+For inter-node scalability, we run MPI \texttt{ior} processes across up to 128 DAOS client nodes, with each process issuing sequential I/O requests of a fixed $rs$. We sweep the number of nodes and MPI processes per node (PPN), reporting aggregated read and write bandwidth. These results reveal the throughput limit for scientific streaming pipelines at scale.
 
 
 
 \subsubsection{DAOS POSIX Container Access Approaches}
 
-Mounting a DAOS POSIX container via \textit{dfuse} is the most portable approach, allowing unmodified POSIX applications to access DAOS through standard Linux filesystem interfaces, at the cost of an overhead on every operation. To quantify this overhead, we evaluate \textit{fio} and IOR with three POSIX container access approaches on Sys-A:
+Mounting a DAOS POSIX container via \textit{dfuse} is the most portable approach, allowing unmodified POSIX applications to access DAOS through standard Linux filesystem interfaces, at the cost of overhead on every operation. To quantify this overhead, we evaluate \textit{fio} and IOR with three POSIX container access approaches on Sys-A:
 
 \begin{enumerate}[label=(\alph*)]
 
 \item POSIX: Mount the DAOS POSIX container via \textit{dfuse} and access it through \textit{fio}/IOR's POSIX engine.
 
-\item IL: Same as (a), but with DAOS interception library (IL) \texttt{libioil} or \texttt{libpil4dfs} preloaded.
+\item IL: Same as (a), but with the DAOS interception library (IL) \texttt{libioil} or \texttt{libpil4dfs} preloaded.
 
 \item DFS: Use native \texttt{dfs} access, bypassing \textit{dfuse} entirely.
 
@@ -55,7 +55,7 @@ Mounting a DAOS POSIX container via \textit{dfuse} is the most portable approach
 
 \subsubsection{Access Patterns}
 
-In traditional filesystems, sequential access significantly outperforms random. DAOS narrows this gap through its log-structured storage engine and byte-addressable object store. To investigate this effect, we benchmark \textit{fio} across five read/write mixes, where read and write I/O requests are issued simultaneously: (1) read-only; (2) read-heavy (20\% write); (3) balanced (50\% write); (4) write-heavy (80\% write); and (5) write-only, each tested under both random and sequential access. These five mixes also mirror the distinct stages of a scientific streaming workflow: write-only and write-heavy configurations correspond to data ingestion, where detectors or simulations produce data at high rates; balanced and read-heavy configurations represent concurrent online analysis, where processed and raw data coexist; and read-only configurations reflect post-processing or visualization stages.
+In traditional filesystems, sequential access significantly outperforms random access. DAOS narrows this gap through its log-structured storage engine and byte-addressable object store. To investigate this effect, we benchmark \textit{fio} across five read/write mixes, where read and write I/O requests are issued simultaneously: (1) read-only; (2) read-heavy (20\% write); (3) balanced (50\% write); (4) write-heavy (80\% write); and (5) write-only, each tested under both random and sequential access. These five mixes also mirror the distinct stages of a scientific streaming workflow: write-only and write-heavy configurations correspond to data ingestion, where detectors or simulations produce data at high rates; balanced and read-heavy configurations represent concurrent online analysis, where processed and raw data coexist; and read-only configurations reflect post-processing or visualization stages.
 
 \textcolor{blue}{
 In addition,
