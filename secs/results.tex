@@ -70,7 +70,7 @@ In \textit{fio} reports, latency is further broken down into submission latency 
     \includegraphics[width=1\linewidth]{figures/ior-scaling.pdf}
 
     \vspace{-1em}
-    \caption{\texttt{ior} peak read-after-write bandwidth on Sys-A.}
+    \caption{\texttt{ior} median read-after-write bandwidth on Sys-A: node-count scaling at PPN\,=\,48 (left) and PPN scaling at $n{=}128$ (right).}
     \label{fig:ior-scaling}
 \end{figure}
 
@@ -78,12 +78,12 @@ We evaluate \texttt{ior} read-after-write workloads using the \texttt{dfs} acces
 
 We examine PPN\,=\,8,\,16,\,32,\,48 and $rs$ of 2~MiB and 16~MiB, with the \texttt{dfs} chunk size set to 2~MiB. Despite being submitted via many HPC jobs and executed on different nodes ($n\geq64$), the run-to-run throughput variability remains within 11\% for all workloads.
 
-Fig.~\ref{fig:ior-scaling} reports the 10-iteration peak bandwidth for each node count ($n$) and PPN. DAOS scales near-linearly before saturation at $\mathrm{PPN} \times n = 4096$: all 8 tested node counts achieve higher throughput at $rs{=}$16~MiB than at $rs{=}$2~MiB, and 14 of the 16 $n$--$rs$ combinations reach peak throughput at PPN\,=\,48, with the remaining 2 peaking at PPN\,=\,32. At a single node, peak write and read bandwidths are 169.8~GiB/s (over 90\% of the NIC limit) and 138.8~GiB/s, respectively; at $n{=}16$, these scale to 1977.0 and 1830.8~GiB/s, and at $n{=}128$, to 5392.4 and 5519.3~GiB/s, demonstrating that DAOS on Sys-A is capable of delivering multi-TiB/s throughput with only tens of nodes. 
+DAOS scales near-linearly before saturation at $\mathrm{PPN} \times n = 4096$: all 8 tested node counts achieve higher throughput at $rs{=}$16~MiB than at $rs{=}$2~MiB, and 14 of the 16 $n$--$rs$ combinations reach peak throughput at PPN\,=\,48, with the remaining 2 peaking at PPN\,=\,32. Fig.~\ref{fig:ior-scaling} reports the 10-iteration median bandwidthalong two slices of the sweep: node-count ($n$) scaling at PPN\,=\,48 (left) and PPN scaling at $n{=}128$ (right). Throughput grows steadily with $n$. At a single node, median write and read bandwidths at $rs{=}$16~MiB are 169.2~GiB/s (over 90\% of the NIC limit) and 108.7~GiB/s, respectively; at $n{=}16$, these scale to 1971.1 and 1824.5~GiB/s, and at $n{=}128$, to 5371.6 and 5507.1~GiB/s, demonstrating that DAOS on Sys-A is capable of delivering multi-TiB/s throughput with only tens of nodes. The PPN sweep at $n{=}128$ further shows that the larger request size demands less process concurrency: $rs{=}$16~MiB already delivers over 80\% of its PPN\,=\,48 bandwidth at PPN\,=\,8 and is nearly flat beyond PPN\,=\,32, whereas $rs{=}$2~MiB keeps scaling with PPN, with read growing 3.5$\times$ from PPN\,=\,8 to 48.
 
-Although \texttt{ior} read throughput eventually surpasses write throughput, the crossover requires a large process count: by 10-run median, it occurs at $\mathrm{PPN}{\times}n{=}1024$ for $rs{=}16$~MiB and at 6144 for $rs{=}2$~MiB. Among the hundreds of processes typical of scientific streaming workloads, write bandwidth is therefore expected to exceed read.
+Although \texttt{ior} read throughput eventually surpasses write throughput, the crossover requires a large process count: at $rs{=}16$~MiB, read overtakes write at 1024 MPI processes, whereas at $rs{=}2$~MiB it occurs only at the largest configuration (PPN\,=\,48, $n{=}128$, i.e., 6144 processes). Among the hundreds of processes typical of scientific streaming workloads, write bandwidth is therefore expected to exceed read.
 
 
-\textbf{Takeaway:} DAOS scales near-linearly to multi-TiB/s with tens of client nodes on Sys-A. With hundreds of processes, write throughput exceeds read throughput, and the crossover requires very high concurrency.
+\textbf{Takeaway:} DAOS scales to multi-TiB/s with tens of client nodes on Sys-A, and larger request sizes saturate at lower process concurrency. With hundreds of processes, write throughput exceeds read throughput, and the crossover requires very high concurrency.
 
 
 \subsection{DAOS POSIX Container Access Approaches}
