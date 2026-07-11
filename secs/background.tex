@@ -24,27 +24,13 @@ When creating containers, users configure properties such as the container type,
 
 \subsection{DAOS Performance Analysis}
 
-% \input{tables/perf-lit-review}
 
 \textit{fio} (Flexible I/O Tester)~\cite{fio-github} and IOR~\cite{ior-github, ior-paper2008sc} are two widely used I/O benchmarking tools.
 \textit{fio} targets single-node performance and supports a broad range of I/O engines as well as both sequential and random access patterns. IOR is an MPI-based benchmark suite. Its \texttt{ior} executable measures aggregate bulk I/O throughput across MPI ranks, while \texttt{mdtest} measures metadata operations such as file creation and removal.
 
 
-Both tools have been widely adopted in prior DAOS performance studies.
-% , where we summarize their configurations, workloads and key findings in Table~\ref{tab:perf-lit-review}. 
-{
-\color{blue}
-(Needs some comparison between our results to their results.)
-}
-
-IOR benchmarking with server and client sides scaling \cite{daos-scalability2023SCAsia}.
+Both tools have been widely adopted in prior DAOS performance studies. Hennecke et al.\ used IOR to characterize DAOS bandwidth scaling on both the server and client sides \cite{daos-scalability2023SCAsia, daos-dram-intro2023}. Latham et al.\ reported initial performance results on a 20-node Aurora-specification storage system \cite{DAOS-aurora-20-node-test2024scw}. Manubens et al.\ systematically studied DAOS for accelerating numerical weather prediction workflows and compared it against Lustre and Ceph \cite{daos-vs-lustre2022pdsw, hpc-weather2023ipdps, daos-hpc-storage2023cluster, manubens2024reducing}. Logan et al.\ evaluated DAOS with scientific workloads and compared it against OrangeFS and BeeGFS \cite{XianheSun2023evaluation}. 
+In addition to the x86-based DAOS systems, Hennecke et al. evaluated DAOS performance using ARM64-based clients \cite{daos-arm2023SCAsia}. Zhu et al. offloaded the DAOS client to a BlueField-3 DPU and found that RDMA bandwidth on the DPU matched that of the x86 host \cite{daos-smartnic2025scw}. Collectively, these studies demonstrate DAOS's high I/O performance across diverse platforms and workloads, matching or exceeding established parallel filesystems.
 
 
-DAOS performance exploring \cite{daos-perf-explore2024scw}.
-
-DAOS vs Lustre \cite{daos-vs-lustre2022pdsw}.
-
-Latham et al. reported initial DAOS performance results on a 20-node storage system sharing Aurora's hardware specifications \cite{DAOS-aurora-20-node-test2024scw}.
-
-In addition to the x86-based DAOS systems, Hennecke et al. evaluated DAOS performance using ARM64-based clients \cite{daos-arm2023SCAsia}. Zhu et al. offloaded the DAOS client to a BlueField-3 DPU and found that RDMA bandwidth on the DPU matched that of the x86 host \cite{daos-smartnic2025scw}.
-
+% \textbf{Gap addressed by this work.} None of the above studies jointly examine concurrency \emph{structure} (as opposed to magnitude) and its effect on tail latency, nor do they characterize access-order sensitivity across read/write mixes. Our tail latency decomposition (Section~\ref{sec:results}) and access-order analysis address this gap, and our dual-testbed design allows us to separate findings that are DAOS-architectural (and thus expected to generalize) from findings that are specific to a given network fabric or storage tier configuration.
