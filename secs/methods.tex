@@ -24,7 +24,7 @@ Table~\ref{tab:platform-cmp} summarizes the key specifications of both systems. 
 
 \subsubsection{I/O Concurrency}
 
-In a scientific streaming system, multiple data streams are produced and consumed simultaneously, imposing high concurrent I/O demands. We study the intra-node concurrency with $fio$, where a single client node issues multiple parallel I/O requests, and node-level scaling with IOR, where multiple client nodes work simultaneously.
+In a scientific streaming system, multiple data streams are produced and consumed simultaneously, imposing high concurrent I/O demands. We study the intra-node concurrency with \textit{fio}, where a single client node issues multiple parallel I/O requests, and node-level scaling with IOR, where multiple client nodes work simultaneously.
 
 The \textit{fio} task concurrency is controlled by two parameters: the number of jobs (denoted $nj$), where each job runs as a separate process that issues I/O requests, and the I/O queue depth (denoted $iod$), which specifies how many I/O requests each process can have in flight simultaneously. For asynchronous I/O engines such as \texttt{dfs}, the product $nj \times iod$ determines the overall concurrency level. Synchronous engines, such as \texttt{pvsync2}, issue one blocking request at a time, regardless of $iod$. In addition, the granularity of each I/O request (\textit{fio}'s \texttt{bs} flag, denoted $rs$ to unify with IOR's transfer size \texttt{-t}) substantially influences both throughput and latency. We systematically vary these parameters across three experiment designs:
 
