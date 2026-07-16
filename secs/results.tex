@@ -135,6 +135,23 @@ Per-run traces reveal two distinct sources of this variability. At $rs$=4~KiB, s
 \textbf{Takeaway:} Access order matters only at small I/O request sizes, where sequential access favors reads and random access favors writes. Read-only throughput is also markedly less consistent than that of write-dominated mixes.
 
 
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=1\linewidth]{figures/mpi-fio-read-bar.pdf}
+    \caption{The effect of object size on (cold) read throughput.}
+    \label{fig:cold-read-large-vs-small}
+\end{figure}
+
+
+Fig.~\ref{fig:cold-read-large-vs-small} shows read throughput for 1~TiB containers populated with either 16~GiB or 4~MiB objects on Sys-A, using MPI-launched \textit{fio} processes. Throughput is measured as data volume divided by wall time (the latest read-completion timestamp minus the earliest read-start timestamp across all processes), with the I/O request size fixed at 2~MiB, the same as the Sys-A chunk size. Within a single run, throughput is lower on the first iteration and higher on later ones, and we report only the first-iteration (cold) values.
+
+The baseline 16~GiB/rank large-object read scales near-linearly with node count, from 73~GiB/s at 2 nodes to 457~GiB/s at 16 nodes, showing that distributing objects across more DAOS clients effectively leverages the available bandwidth.
+Small-object read throughput is generally lower and depends heavily on the number of objects held per rank. At 4096 objects/rank (16~GiB/rank, matching the 16~GiB-object baseline), throughput reaches only 89~GiB/s at 8 nodes and 91~GiB/s at 16 nodes, a 3--5$\times$ gap versus the large-object baseline at the same node counts. At 2 nodes, 1024 objects/rank (4~GiB/rank) yields 107~GiB/s, 1.47$\times$ the baseline, but at 8 and 16 nodes its throughput falls to 0.7$\times$ the baseline. This shows that the number of objects per rank, not the total data volume per rank, drives the small-object read penalty. This per-object overhead compounds as node count grows, causing small-object throughput to plateau.
+
+
+\textbf{Takeaway:} Large objects scale near-linearly with node count, but many small objects per rank saturate well below that ceiling due to per-object overhead. Therefore, aggregating small detector events into fewer, larger objects is key to scaling event storage.
+
+
 \subsection{DAOS vs.\ NFS}
 
 

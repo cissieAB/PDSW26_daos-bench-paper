@@ -57,9 +57,9 @@ Mounting a DAOS POSIX container via \textit{dfuse} is the most portable approach
 
 In traditional filesystems, sequential access significantly outperforms random access. DAOS narrows this gap through its log-structured storage engine and byte-addressable object store. To investigate this effect, we benchmark \textit{fio} across five read/write mixes, where read and write I/O requests are issued simultaneously: (1) read-only; (2) read-heavy (20\% write); (3) balanced (50\% write); (4) write-heavy (80\% write); and (5) write-only, each tested under both random and sequential access. These five mixes also mirror the distinct stages of a scientific streaming workflow: write-only and write-heavy configurations correspond to data ingestion, where detectors or simulations produce data at high rates; balanced and read-heavy configurations represent concurrent online analysis, where processed and raw data coexist; and read-only configurations reflect post-processing or visualization stages.
 
-\textcolor{blue}{
-In addition,
-}
+
+In addition, we evaluate how object size and count affect read throughput at scale. On Sys-A, we create two 1~TiB DAOS containers: one holds 64 16~GiB objects, and the other holds many 4~MiB objects. We use MPI-launched \textit{fio} processes to read from both containers and compare the throughput. This informs the storage design for detector-generated events in scientific streaming pipelines, where individual events are small but must be retrieved at sustained high rates.
+
 
 
 \subsection{DAOS vs.\ Other Storage Systems}
