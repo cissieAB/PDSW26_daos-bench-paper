@@ -9,7 +9,7 @@
 
 \begin{figure}[t]
     \centering
-    \begin{subfigure}{0.95\linewidth}
+    \begin{subfigure}{0.48\linewidth}
         \centering
         \includegraphics[width=\linewidth]{figures/fio-randwrite_bs-iod_median-bw.pdf}
         \vspace{-2em}
@@ -17,7 +17,7 @@
         \label{fig:fio-sweep-bs_iod}
     \end{subfigure}
 ~
-    \begin{subfigure}{0.95\linewidth}
+    \begin{subfigure}{0.48\linewidth}
         \centering
         \includegraphics[width=\linewidth]{figures/fio-randwrite_bw_median_by_nj.pdf}
         \vspace{-2em}
@@ -116,7 +116,7 @@ POSIX via \textit{dfuse} delivers substantially lower throughput than DFS across
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=1\linewidth]{figures/fio-read-boxplot.pdf}
+    \includegraphics[width=0.9\linewidth]{figures/fio-read-boxplot.pdf}
     \caption{Boxplot of \textit{fio} read-only throughput.}
     \label{fig:fio-read-boxplot}
 \end{figure}
@@ -132,7 +132,7 @@ Read-only workloads also exhibit the largest run-to-run variability among the fi
 Per-run traces reveal two distinct sources of this variability. At $rs$=4~KiB, sequential read shows a classic warm-up ramp, with the first two runs 33\% and 17\% below steady state. At $rs\geq$1~MiB, the low outliers are instead episodic: dips to roughly half the median recur in a few runs, while writes in the same runs remain flat. We infer that background aggregation of the rewritten working set competes with reads for NVMe bandwidth, but leave it for future investigation.
 
 
-\textbf{Takeaway:} Access order matters only at small I/O request sizes, where sequential access favors reads and random access favors writes. Read-only throughput is also markedly less consistent than that of write-dominated mixes.
+\textbf{Takeaway:} Access order matters only at small I/O request sizes, where sequential access favors reads, and random access favors writes. Read-only throughput is also markedly less consistent than that of write-dominated mixes.
 
 
 \begin{figure}[t]
@@ -157,7 +157,7 @@ Small-object read throughput is generally lower and depends heavily on the numbe
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=1\linewidth]{figures/fio-cmp_dfs-pvsync2_bw-cpu.pdf}
+    \includegraphics[width=0.8\linewidth]{figures/fio-cmp_dfs-pvsync2_bw-cpu.pdf}
     \caption{Comparison between DAOS and NVMe-based NFS.}
     \label{fig:daos-vs-nfs}
 \end{figure}

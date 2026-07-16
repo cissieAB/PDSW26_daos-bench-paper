@@ -2,23 +2,15 @@
 
 Distributed Asynchronous Object Storage (DAOS) is a high-performance, open-source parallel I/O stack built on Non-Volatile Memory Express (NVMe) and Remote Direct Memory Access (RDMA) technologies \cite{daos-exascale-storage2016sc, daos-intro2020, daos-dram-intro2023, daos-github}. It is designed to replace POSIX file and directory abstractions with a versioned, key-value object model. Since its initial deployment in 2020, prior studies have demonstrated DAOS's excellent scalability, showing it matches or outperforms traditional parallel file systems \cite{daos-vs-lustre2022pdsw, daos-arm2023SCAsia, daos-scalability2023SCAsia, daos-perf-explore2024scw, DAOS-aurora-20-node-test2024scw, XianheSun2023evaluation}. Motivated by its success in reducing I/O contention in weather-prediction workflows and machine-learning training pipelines \cite{hdf5-daos2022tpds, daos-adios2024ISC, hpc-weather2023ipdps, manubens2024reducing, daos-smartnic2025scw, devarajan2021dlio, mlperf-storage-github, brim2025dug-daos-aio}, we plan to use DAOS as a burst buffer for scientific streaming systems, where raw network packets stream from a large number of scientific instruments directly into high-performance computing (HPC) facilities and must be absorbed at line rate, without intermediate staging before reaching DAOS \cite{ejfat2022indis, e2sar-github, mei2024sc-poster}.
 
-{
-\color{blue}
-
-None jointly examine how I/O concurrency structure (not just its magnitude), POSIX access method, and access pattern interact to shape both throughput \emph{and} tail latency for the kind of sustained, many-writer/many-reader streaming ingestion that scientific facilities increasingly rely on. This leaves practitioners with fragmented, sometimes conflicting guidance on how to configure DAOS-backed streaming pipelines in practice, a gap that is only widened by the fact that most prior evaluations report a single throughput number per configuration rather than characterizing run-to-run variability or tail behavior.
-
-This paper presents a systematic, insight-organized characterization of DAOS for scientific streaming workloads, spanning two production-representative DAOS deployments. Our contributions are as follows:
+Scientific streaming pipelines stress DAOS differently from the checkpoint- and training-style workloads of prior studies. Many instrument streams write in parallel, so throughput must hold under heavy intra-node concurrency and scale across client nodes. Line-rate absorption makes tail latency the binding constraint, since one slow write-back pressures the whole pipeline. The workflow spans write-dominated ingestion, mixed online analysis, and read-only post-processing. Raw detector events are small (est. 1~MiB each), compared to the checkpoint-based systems. Prior evaluations primarily focus on peak throughput, leaving these streaming-critical dimensions uncharacterized. We therefore conduct a systematic characterization across two representative DAOS deployments, including a 128-node system on Aurora \cite{aurora-intro2025}. Our key findings are summarized as follows:
 
 \begin{itemize}
-    \item We quantify how \textit{fio} I/O request size, queue depth, and process count independently affect single-node throughput, showing that request size relative to the DAOS chunk size, not concurrency depth, is the dominant factor at small scale (Section~\ref{sec:iod-scaling}).
+\item I/O request size relative to the DAOS chunk size is the first-order performance factor. Chunk-aligned requests saturate the NIC bandwidth with modest concurrency, whereas smaller requests remain IOPS- and CPU-bound.
 
-    \item We show that at fixed total I/O concurrency, the split between per-process queue depth and process count materially reshapes tail latency even when mean throughput is unchanged, identifying concurrency structure as a first-order tuning knob independent of concurrency magnitude.
+\item At fixed total concurrency, the process/queue-depth split leaves throughput unchanged but shifts P99.99 latency by up to $26\times$ the median. More processes with shallower queues minimize tail latency.
 
-    \item We characterize multi-node scaling on a 128-node production DAOS deployment on Aurora, showing near-linear growth to multi-TiB/s aggregate bandwidth and identifying the process-count and request-size regimes where read throughput overtakes write throughput (Section~\ref{sec:multinode}).
-
-    \item We evaluate sensitivity to access order (sequential vs.\ random) across read/write mixes and request sizes, and we compare DAOS's RDMA-based transport against NFSv4.2 over TCP, characterizing where DAOS's throughput advantage holds and where it narrows.
+\item DAOS scales near-linearly to multi-TiB/s across client nodes for large objects, but per-object overhead causes many-small-object reads to plateau at $3$--$5\times$ lower, motivating event aggregation before ingestion.
 \end{itemize}
 
-}
 
-The remainder of this paper is organized as follows. Section~\ref{sec:background} reviews the DAOS architecture and prior performance studies. Section~\ref{sec:methods} describes our experimental platforms and benchmark configurations. Section~\ref{sec:results} presents our measurement results. Section~\ref{sec:conclusion} concludes the paper and discusses future work.
+The remainder of this paper is organized as follows. Section~\ref{sec:background} reviews the DAOS architecture and prior performance studies. Section~\ref{sec:methods} describes our experimental platforms and benchmark configurations. Section~\ref{sec:results} presents our measurement results and findings. Section~\ref{sec:conclusion} concludes the paper and discusses future work.
