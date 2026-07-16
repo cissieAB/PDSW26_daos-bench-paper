@@ -46,9 +46,7 @@ Newport News, Virginia, USA \\
 \maketitle
 
 \begin{abstract}
-This document is a model and instructions for \LaTeX.
-This and the IEEEtran.cls file define the components of your paper [title, text, heads, etc.]. *CRITICAL: Do Not Use Symbols, Special Characters, Footnotes, 
-or Math in Paper Title or Abstract.
+Distributed Asynchronous Object Storage (DAOS) is an emerging RDMA-based parallel storage system. We are motivated to use it as a burst buffer for scientific streaming pipelines, which demand high write concurrency and strict tail latency under continuous, line-rate ingestion. Prior DAOS evaluations emphasize peak throughput, while our study also examines tail latency and read/write access patterns. We characterize DAOS across two deployments, including a 128-node system on Aurora. We find that request size relative to the DAOS chunk size, rather than process count or queue depth, dominates throughput, while the process/queue-depth split independently governs tail latency. Random and sequential access converge once requests are chunk-size aligned, and write throughput exceeds read throughput at the concurrency levels typical of streaming ingestion. DAOS's RDMA transport outperforms NFS by an order of magnitude at chunk-aligned sizes, though this advantage narrows for small, IOPS-bound accesses. These results guide DAOS configuration for latency-sensitive streaming systems.
 \end{abstract}
 
 \begin{IEEEkeywords}
