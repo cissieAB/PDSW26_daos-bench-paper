@@ -29,8 +29,8 @@ In a scientific streaming system, multiple data streams are produced and consume
 The \textit{fio} task concurrency is controlled by two parameters: the number of jobs (denoted $nj$), where each job runs as a separate process that issues I/O requests, and the I/O queue depth (denoted $iod$), which specifies how many I/O requests each process can have in flight simultaneously. For asynchronous I/O engines such as \texttt{dfs}, the product $nj \times iod$ determines the overall concurrency level. Synchronous engines, such as \texttt{pvsync2}, issue one blocking request at a time, regardless of $iod$. In addition, the granularity of each I/O request (\textit{fio}'s \texttt{bs} flag, denoted $rs$ to unify with IOR's transfer size \texttt{-t}) substantially influences both throughput and latency. We systematically vary these parameters across three experiment designs:
 
 \begin{enumerate}[label=(\alph*)]
-    \item Single-process, sweep $rs$ and $iod$. The tested request sizes are 4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB, corresponding to the CPU page size, the modern GPU page size, the DAOS POSIX container chunk size, the huge page size, and bulk transfers, respectively.
-    \item Fix $iod$, sweep $nj$ and $rs$. This characterizes the effect of process-level parallelism across I/O request sizes.
+    \item Single-process, sweep $rs$ and $iod$. The tested request sizes are 4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB, corresponding to the CPU page size, the modern GPU page size, the DAOS POSIX container's default chunk size, the huge page size, and bulk transfers, respectively.
+    \item Fix $iod$, sweep $nj$ and $rs$. This characterizes process-level parallelism across I/O request sizes.
     \item Fix total concurrency ($nj \times iod$) and $rs$, sweep the $nj/iod$ split. This quantifies how concurrency structure affects tail latency at similar throughput.
 \end{enumerate}
 
