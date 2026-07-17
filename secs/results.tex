@@ -30,7 +30,7 @@
 \end{figure}
 
 
-We run the \textit{fio} \texttt{randwrite} workload on Sys-B. Each configuration is repeated at least 10 times. Fig.~\ref{fig:fio-sweep-bs_iod} shows the median throughput and CPU utilization by queue depth. I/O request size has a greater impact on throughput than queue depth. The two small I/O request sizes (4~KiB and 16~KiB) yield consistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, saturating at $iod{\geq}32$. Large I/O request sizes (1, 2, and 4~MiB) yield bandwidth that rises sharply from $iod{=}4$ to $iod{=}8$ and plateaus at 16--21~GiB/s for $iod{\geq}16$, roughly an order of magnitude above the small-block regime. At $iod{=}64$, the median IOPS is 176~K for $rs{=}4$~KiB and 18~K for $rs{=}1$~MiB, that the 4~KiB configuration sustains nearly 10$\times$ the request rate yet delivers 26$\times$ lower throughput. The CPU utilization clearly indicates that on Sys-B, $rs$=4/16~KiB is CPU-constrained that it consistently occupies 100\% CPU across all queue depths. Run-to-run variability, quantified by the coefficient of variation (standard deviation divided by mean, in percentage), remains within 8\% across all configurations, showing consistent write performance.
+We run the \textit{fio} \texttt{randwrite} workload on Sys-B. Linux page cache is disabled with parameter \texttt{--direct=1}. Each configuration is repeated at least 10 times. Fig.~\ref{fig:fio-sweep-bs_iod} shows the median throughput and CPU utilization by queue depth. I/O request size has a greater impact on throughput than queue depth. The two small I/O request sizes (4~KiB and 16~KiB) yield consistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, saturating at $iod{\geq}32$. Large I/O request sizes (1, 2, and 4~MiB) yield bandwidth that rises sharply from $iod{=}4$ to $iod{=}8$ and plateaus at 16--21~GiB/s for $iod{\geq}16$, roughly an order of magnitude above the small-block regime. At $iod{=}64$, the median IOPS is 176~K for $rs{=}4$~KiB and 18~K for $rs{=}1$~MiB, that the 4~KiB configuration sustains nearly 10$\times$ the request rate yet delivers 26$\times$ lower throughput. The CPU utilization clearly indicates that on Sys-B, $rs$=4/16~KiB is CPU-constrained that it consistently occupies 100\% CPU across all queue depths. Run-to-run variability, quantified by the coefficient of variation (standard deviation divided by mean, in percentage), remains within 8\% across all configurations, showing consistent write performance.
 
 
 
@@ -56,7 +56,7 @@ According to the DAOS user guide~\cite{daos-user-guide}, the chunk size refers t
 \begin{figure}[t]
     \centering
     \includegraphics[width=1\linewidth]{figures/fio-tail_latency_breakdown.pdf}
-    \caption{Tail latency breakdown of \textit{fio} \texttt{randwrite} workloads.}
+    \caption{Tail latency breakdown of \textit{fio} \texttt{randwrite}.}
     \label{fig:fio-tail-latency-breakdown}
 \end{figure}
 
