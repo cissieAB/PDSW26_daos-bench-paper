@@ -34,9 +34,6 @@ We run the \textit{fio} \texttt{randwrite} workload on Sys-B. Linux page cache i
 
 
 
-\begin{takeaway}
-\textbf{Takeaway:} I/O request size dominates single-process DAOS throughput. Request sizes that are multiples of the DAOS chunk size quickly saturate bandwidth, while small request sizes remain CPU- and IOPS-bound.
-\end{takeaway}
 
 
 \subsubsection{Single-Node Process Count Scaling}
@@ -45,10 +42,10 @@ We then fix $iod{=}16$ and sweep the number of \textit{fio} jobs ($nj$), repeati
 
 According to the DAOS user guide~\cite{daos-user-guide}, the chunk size refers to the largest I/O size that a DAOS client sends to a storage target in a single request. Therefore, for $rs$=2/4~MiB, each I/O operation is broken into several 1~MiB (chunk size on Sys-B) requests, whereas for $rs$=4/16~KiB, more I/O requests are issued while bandwidth remains underutilized. This explains why $rs$ has a greater impact than queue or process concurrency.
 
-\begin{takeaway}
-\textbf{Takeaway:} I/O request sizes well below the DAOS chunk size require both high $nj$ and $iod$ to maximize bandwidth.
-\end{takeaway}
 
+\begin{takeaway}
+\textbf{Takeaway:} I/O request size dominates DAOS throughput. Request sizes that are multiples of the DAOS chunk size quickly saturate bandwidth, while small request sizes remain CPU- and IOPS-bound.
+\end{takeaway}
 
 
 \subsubsection{Tail Latency at Fixed Concurrency}
