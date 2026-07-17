@@ -1,15 +1,16 @@
 \section{Background and Related Work}
 \label{sec:background}
 
+
+\subsection{DAOS Architecture}
+
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\linewidth]{figures/daos_arch_SCW.pdf}
+    \includegraphics[width=1\linewidth]{figures/daos_arch_SCW.pdf}
     \caption{DAOS architecture overview.}
     \label{fig:daos-arch}
 \end{figure}
 
-
-\subsection{DAOS Architecture}
 
 Lofstead et al. prototyped the initial DAOS design as a next-generation HPC I/O stack by replacing POSIX file and directory abstractions with a distributed, object-based model featuring containers, versioned objects, and epoch-based consistency mechanisms \cite{daos-exascale-storage2016sc}.
 Liang et al.\ presented a full description of the DAOS system built on top of persistent memory (PMem) and NVMe SSDs \cite{daos-intro2020}. Hennecke et al.\ adapted the architecture to replace PMem with DRAM, demonstrating that DRAM maintains competitive performance \cite{daos-dram-intro2023}.
@@ -18,7 +19,8 @@ Fig.~\ref{fig:daos-arch} shows the DAOS architecture, which consists of client (
 
 DAOS organizes storage into three hierarchical abstractions: pools, containers, and objects.
 A pool is a storage reservation spanning one or more storage engines and is the only abstraction tied to physical capacity. Within a pool, a container serves as a logical namespace that can hold an arbitrary number of objects. DAOS containers support multiple access interfaces, including POSIX, HDF5~\cite{hdf5-daos2022tpds}, and Python (via \texttt{pydaos}), each corresponding to a container type.
-When creating containers, users configure properties such as the container type, redundancy factor, and erasure coding cell size. 
+When creating containers, users configure properties such as the container type and redundancy factor. 
+
 
 
 
