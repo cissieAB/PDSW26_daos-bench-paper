@@ -7,6 +7,15 @@
 \subsubsection{Single-Process I/O Queue Depth Scaling}
 \label{sec:iod-scaling}
 
+
+We run the \textit{fio} \texttt{randwrite} workload on Sys-B. Linux page cache is disabled with parameter \texttt{--direct=1}. Each configuration is repeated at least 10 times. Fig.~\ref{fig:fio-sweep-bs_iod} shows the median throughput and CPU utilization by queue depth. I/O request size has a greater impact on throughput than queue depth. The two small I/O request sizes (4~KiB and 16~KiB) yield consistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, saturating at $iod{\geq}32$. Large I/O request sizes (1, 2, and 4~MiB) yield bandwidth that rises sharply from $iod{=}4$ to $iod{=}8$ and plateaus at 16--21~GiB/s for $iod{\geq}16$, roughly an order of magnitude above the small-block regime. At $iod{=}64$, the median IOPS is 176~K for $rs{=}4$~KiB and 18~K for $rs{=}1$~MiB, that the 4~KiB configuration sustains nearly 10$\times$ the request rate yet delivers 26$\times$ lower throughput. The CPU utilization clearly indicates that on Sys-B, $rs$=4/16~KiB is CPU-constrained, as it consistently occupies 100\% CPU across all queue depths. Run-to-run variability, quantified by the coefficient of variation (standard deviation divided by mean, in percentage), remains within 8\% across all configurations, showing consistent write performance.
+
+
+
+
+
+\subsubsection{Single-Node Process Count Scaling}
+
 \begin{figure}[t]
     \centering
     \begin{subfigure}{0.48\linewidth}
@@ -30,13 +39,6 @@
 \end{figure}
 
 
-We run the \textit{fio} \texttt{randwrite} workload on Sys-B. Linux page cache is disabled with parameter \texttt{--direct=1}. Each configuration is repeated at least 10 times. Fig.~\ref{fig:fio-sweep-bs_iod} shows the median throughput and CPU utilization by queue depth. I/O request size has a greater impact on throughput than queue depth. The two small I/O request sizes (4~KiB and 16~KiB) yield consistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, saturating at $iod{\geq}32$. Large I/O request sizes (1, 2, and 4~MiB) yield bandwidth that rises sharply from $iod{=}4$ to $iod{=}8$ and plateaus at 16--21~GiB/s for $iod{\geq}16$, roughly an order of magnitude above the small-block regime. At $iod{=}64$, the median IOPS is 176~K for $rs{=}4$~KiB and 18~K for $rs{=}1$~MiB, that the 4~KiB configuration sustains nearly 10$\times$ the request rate yet delivers 26$\times$ lower throughput. The CPU utilization clearly indicates that on Sys-B, $rs$=4/16~KiB is CPU-constrained that it consistently occupies 100\% CPU across all queue depths. Run-to-run variability, quantified by the coefficient of variation (standard deviation divided by mean, in percentage), remains within 8\% across all configurations, showing consistent write performance.
-
-
-
-
-
-\subsubsection{Single-Node Process Count Scaling}
 
 We then fix $iod{=}16$ and sweep the number of \textit{fio} jobs ($nj$), repeating each $rs$--$nj$ combination 10 times. Multiple \textit{fio} jobs/processes are configured to write to the same DAOS object. As Fig.~\ref{fig:fio-sweep-bs_nj} shows, the large I/O request sizes (1/2/4~MiB) are already near-peak at $nj{=}4$, delivering 22.5--22.7~GiB/s (over 95\% of the NIC limit), and remain flat across all $nj$ values, with a slight decline to 21.2--21.5~GiB/s at $nj{\geq}32$. This indicates that for the Sys-B DAOS client node, throughput is NIC-bound: 4--16 processes with $iod{=}16$ saturate the NIC, and additional processes offer no further benefit. In contrast, small I/O request sizes continue to scale with $nj$, saturating at $nj{\geq}16$ with median bandwidth peaking at 6.9~GiB/s and 16.7~GiB/s for 4~KiB and 16~KiB, respectively, more than 7$\times$ higher than the single-process values in Fig.~\ref{fig:fio-sweep-bs_iod}. This shows that both $nj$ and $iod$ scaling are essential to improve throughput for small I/O request sizes. Run-to-run variability remains within 12\% across all configurations.
 
