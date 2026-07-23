@@ -40,7 +40,7 @@ For inter-node scalability, we run MPI \texttt{ior} processes across up to 128 D
 
 \subsubsection{DAOS POSIX Container Access Approaches}
 
-Mounting a DAOS POSIX container via \textit{dfuse} is the most portable approach, allowing unmodified POSIX applications to access DAOS through standard Linux filesystem interfaces, at the cost of lower throughput. To quantify this overhead, we evaluate IOR with three POSIX container access approaches on Sys-A: (a) POSIX: Mount the DAOS POSIX container via \textit{dfuse} and access it through the IOR POSIX module; (b)IL: Same as (a), but with the DAOS interception library (IL) \texttt{libpil4dfs} preloaded; and (c) DFS: Use IOR \texttt{dfs} module, bypassing \textit{dfuse} entirely.
+Mounting a DAOS POSIX container via \textit{dfuse} is the most portable approach, allowing unmodified POSIX applications to access DAOS through standard Linux filesystem interfaces, at the cost of lower throughput. To quantify this overhead, we evaluate IOR with three POSIX container access approaches on Sys-A: (a) POSIX: Mount the DAOS POSIX container via \textit{dfuse} and access it through the IOR POSIX module; (b) IL: Same as (a), but with the DAOS interception library (IL) \texttt{libpil4dfs} preloaded; and (c) DFS: Use IOR \texttt{dfs} module, bypassing \textit{dfuse} entirely.
 
 
 

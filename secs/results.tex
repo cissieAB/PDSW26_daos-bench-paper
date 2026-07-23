@@ -39,7 +39,7 @@ We run the \textit{fio} \texttt{randwrite} workload on Sys-B. Run-to-run variabi
 
 
 
-We then fix $iod{=}16$ and sweep the number of \textit{fio} jobs ($nj$). Multiple \textit{fio} jobs/processes are configured to write to one large DAOS object. We repeat each $rs$--$nj$ combination 10 times, and run-to-run variability remains within 12\% across all configurations. As Fig.~\ref{fig:fio-sweep-bs_nj} shows, the large I/O request sizes (1/2/4~MiB) are already near-peak at $nj{=}4$, delivering 22.5--22.7~GiB/s (over 95\% of the NIC limit), and remain flat across all $nj$ values, with a slight decline to 21.2--21.5~GiB/s at $nj{\geq}32$. This indicates that for Sys-B, DAOS throughput is client-side NIC-bound: 4--16 processes with $iod{=}16$ saturate the NIC, and additional processes offer no further benefit. In contrast, small I/O request sizes continue to scale with $nj$, saturating at $nj{\geq}16$ with median bandwidth peaking at 6.9~GiB/s and 16.7~GiB/s for 4~KiB and 16~KiB, respectively, 7$\times$ higher than the single-process values in Fig.~\ref{fig:fio-sweep-bs_iod}.
+We then fix $iod{=}16$ and sweep the number of \textit{fio} jobs ($nj$). Multiple \textit{fio} jobs/processes are configured to write to one large DAOS object. Run-to-run variability remains within 12\% across all configurations. As Fig.~\ref{fig:fio-sweep-bs_nj} shows, the large I/O request sizes (1/2/4~MiB) are already near-peak at $nj{=}4$, delivering 22.5--22.7~GiB/s (over 95\% of the NIC limit), and remain flat across all $nj$ values, with a slight decline to 21.2--21.5~GiB/s at $nj{\geq}32$. This indicates that for Sys-B, DAOS throughput is client-side NIC-bound: 4--16 processes with $iod{=}16$ saturate the NIC, and additional processes offer no further benefit. In contrast, small I/O request sizes continue to scale with $nj$, saturating at $nj{\geq}16$ with median bandwidth peaking at 6.9~GiB/s and 16.7~GiB/s for 4~KiB and 16~KiB, respectively, 7$\times$ higher than the single-process values in Fig.~\ref{fig:fio-sweep-bs_iod}.
 
 According to the DAOS user guide~\cite{daos-user-guide}, the chunk size refers to the largest I/O size that a DAOS client sends to a storage target in a single request. Therefore, for $rs$=2/4~MiB, each I/O operation is broken into several 1~MiB (chunk size on Sys-B) requests, whereas for $rs$=4/16~KiB, more I/O requests are issued while bandwidth remains underutilized. This explains why $rs$ has a greater impact than queue or process concurrency.
 
@@ -51,18 +51,18 @@ According to the DAOS user guide~\cite{daos-user-guide}, the chunk size refers t
 
 \subsubsection{Tail Latency at Fixed Concurrency}
 
-
-
-We evaluate five $nj/iod$ combinations on Sys-B with their product fixed at 256 and $rs$=1~MiB. Every \textit{fio} process writes to an individual object. Each combination is repeated more than 10 times, and we compare the median values. Across all configurations, the mean latency (10.8--11.1~ms) remains consistent, while maximum latency varies from 144 to 165~ms. 
-
-In \textit{fio} reports, latency is further broken down into submission latency ($slat$, reported as minimum, mean, and maximum) and completion latency ($clat$, reported as percentiles P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.06~ms across all configurations. When the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 45.6--67.9~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases. At $nj{=}4$ ($iod{=}64$), P99.99 $clat$ reaches 143.7~ms, approximately 26$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable.
-
 \begin{figure}[t]
     \centering
     \includegraphics[width=1\linewidth]{figures/fio-tail_latency_breakdown.pdf}
     \caption{Tail latency breakdown of \textit{fio} \texttt{randwrite}.}
     \label{fig:fio-tail-latency-breakdown}
 \end{figure}
+
+We evaluate five $nj/iod$ combinations on Sys-B with their product fixed at 256 and $rs$=1~MiB. Every \textit{fio} process writes to an individual object. Across all configurations, the mean latency (10.8--11.1~ms) remains consistent, while maximum latency varies from 144 to 165~ms. 
+
+In \textit{fio} reports, latency is further broken down into submission latency ($slat$, reported as minimum, mean, and maximum) and completion latency ($clat$, reported as percentiles P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.06~ms across all configurations. When the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 45.6--67.9~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases. At $nj{=}4$ ($iod{=}64$), P99.99 $clat$ reaches 143.7~ms, approximately 26$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable.
+
+
 
 
 \begin{takeaway}
@@ -73,6 +73,13 @@ In \textit{fio} reports, latency is further broken down into submission latency 
 \subsubsection{Multi-Node Scaling}
 \label{sec:multinode}
 
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=1\linewidth]{figures/ior-scaling.pdf}
+    \caption{\texttt{ior} median read-after-write bandwidth: node-count scaling at PPN\,=\,48 (left) and PPN scaling at $n{=}128$ (right).}
+    \label{fig:ior-scaling}
+\end{figure}
+
 
 We evaluate \texttt{ior} read-after-write workloads on Sys-A. Despite DAOS POSIX containers on Sys-A defaulting to a redundancy factor (\texttt{rd\_fac}) of 3, we set it to 0 to maximize bandwidth, as our goal is finding the upper limit of a streaming workflow. Following \cite{DAOS-aurora-20-node-test2024scw}, we bind MPI processes to CPU cores using the breadth-skip method.
 
@@ -82,12 +89,6 @@ Across the full sweep, all eight tested node counts achieve higher throughput at
 
 Although \texttt{ior} read throughput eventually surpasses write throughput, the crossover requires a large process count: at $rs{=}16$~MiB, read overtakes write at 1024 MPI processes, whereas at $rs{=}2$~MiB it occurs only at the largest configuration (PPN\,=\,48, $n{=}128$, 6144 MPI processes). With hundreds of processes, typical of scientific streaming workloads, write bandwidth is therefore expected to exceed read bandwidth.
 
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=1\linewidth]{figures/ior-scaling.pdf}
-    \caption{\texttt{ior} median read-after-write bandwidth: node-count scaling at PPN\,=\,48 (left) and PPN scaling at $n{=}128$ (right).}
-    \label{fig:ior-scaling}
-\end{figure}
 
 
 
