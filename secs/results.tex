@@ -51,6 +51,12 @@ According to the DAOS user guide~\cite{daos-user-guide}, the chunk size refers t
 
 \subsubsection{Tail Latency at Fixed Concurrency}
 
+
+
+We evaluate five $nj/iod$ combinations on Sys-B with their product fixed at 256 and $rs$=1~MiB. Every \textit{fio} process writes to an individual object. Each combination is repeated more than 10 times, and we compare the median values. Across all configurations, the mean latency (10.8--11.1~ms) remains consistent, while maximum latency varies from 144 to 165~ms. 
+
+In \textit{fio} reports, latency is further broken down into submission latency ($slat$, reported as minimum, mean, and maximum) and completion latency ($clat$, reported as percentiles P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.06~ms across all configurations. When the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 45.6--67.9~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases. At $nj{=}4$ ($iod{=}64$), P99.99 $clat$ reaches 143.7~ms, approximately 26$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable.
+
 \begin{figure}[t]
     \centering
     \includegraphics[width=1\linewidth]{figures/fio-tail_latency_breakdown.pdf}
@@ -58,10 +64,6 @@ According to the DAOS user guide~\cite{daos-user-guide}, the chunk size refers t
     \label{fig:fio-tail-latency-breakdown}
 \end{figure}
 
-
-We evaluate five $nj/iod$ combinations on Sys-B with their product fixed at 256 and $rs$=1~MiB. Every \textit{fio} process writes to an individual object. Each combination is repeated more than 10 times, and we compare the median values. Across all configurations, the mean latency (10.8--11.1~ms) remains consistent, while maximum latency varies from 144 to 165~ms. 
-
-In \textit{fio} reports, latency is further broken down into submission latency ($slat$, reported as minimum, mean, and maximum) and completion latency ($clat$, reported as percentiles P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.06~ms across all configurations. When the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 45.6--67.9~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases. At $nj{=}4$ ($iod{=}64$), P99.99 $clat$ reaches 143.7~ms, approximately 26$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable.
 
 \begin{takeaway}
 \textbf{Takeaway:} At fixed total concurrency, tail latency is highly sensitive to the $nj/iod$ split. More processes with shallower per-process queues reduce tail latency at the cost of higher submission overhead.
@@ -71,12 +73,6 @@ In \textit{fio} reports, latency is further broken down into submission latency 
 \subsubsection{Multi-Node Scaling}
 \label{sec:multinode}
 
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=1\linewidth]{figures/ior-scaling.pdf}
-    \caption{\texttt{ior} median read-after-write bandwidth: node-count scaling at PPN\,=\,48 (left) and PPN scaling at $n{=}128$ (right).}
-    \label{fig:ior-scaling}
-\end{figure}
 
 We evaluate \texttt{ior} read-after-write workloads on Sys-A. Despite DAOS POSIX containers on Sys-A defaulting to a redundancy factor (\texttt{rd\_fac}) of 3, we set it to 0 to maximize bandwidth, as our goal is finding the upper limit of a streaming workflow. Following \cite{DAOS-aurora-20-node-test2024scw}, we bind MPI processes to CPU cores using the breadth-skip method.
 
@@ -86,6 +82,14 @@ Across the full sweep, all eight tested node counts achieve higher throughput at
 
 Although \texttt{ior} read throughput eventually surpasses write throughput, the crossover requires a large process count: at $rs{=}16$~MiB, read overtakes write at 1024 MPI processes, whereas at $rs{=}2$~MiB it occurs only at the largest configuration (PPN\,=\,48, $n{=}128$, 6144 MPI processes). With hundreds of processes, typical of scientific streaming workloads, write bandwidth is therefore expected to exceed read bandwidth.
 
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=1\linewidth]{figures/ior-scaling.pdf}
+    \caption{\texttt{ior} median read-after-write bandwidth: node-count scaling at PPN\,=\,48 (left) and PPN scaling at $n{=}128$ (right).}
+    \label{fig:ior-scaling}
+\end{figure}
+
+
 
 \begin{takeaway}
 \textbf{Takeaway:} DAOS scales to multi-TiB/s with tens of client nodes on Sys-A, and larger I/O request sizes saturate at lower process concurrency. Write throughput is expected to exceed read throughput for hundreds of processes, and the crossover requires very high concurrency.
@@ -94,6 +98,12 @@ Although \texttt{ior} read throughput eventually surpasses write throughput, the
 
 \subsection{DAOS POSIX Container Access Approaches}
 
+
+Fig.~\ref{fig:access-cmp} compares the single-node 10-run median throughput of identical \textit{fio} \texttt{randwrite} ($nj$=$iod$=16) and \texttt{ior} read-after-write (PPN=48, $rs$=2~MiB) workloads across three DAOS container access methods on Sys-A. For \textit{fio} experiments, the POSIX and IL accesses are conducted with the \texttt{pvsync2} engine (it has higher throughput than \texttt{libaio} and \texttt{psync}). Since the \textit{fio} runs fail with \texttt{libpil4dfs}, we fall back to the legacy \texttt{libioil}.
+
+
+POSIX via \textit{dfuse} delivers substantially lower throughput than DFS across all three workloads. For \texttt{ior} write, the throughput gap is as large as 0.8 vs.\ 133.7~GiB/s; \textit{fio} similarly shows 39.3 vs.\ 88.1~GiB/s. The interception library \texttt{libpil4dfs} significantly accelerates \texttt{ior} POSIX access, enabling IL throughput to outperform DFS by 14--30\%, at the cost of a much larger performance range. \texttt{libioil}, however, degrades \textit{fio} throughput to one-third of the POSIX baseline.
+
 \begin{figure}[t]
     \centering
     \includegraphics[width=1\linewidth]{figures/ior_rw_time-nocache.pdf}
@@ -101,11 +111,14 @@ Although \texttt{ior} read throughput eventually surpasses write throughput, the
     \label{fig:access-cmp}
 \end{figure}
 
+<<<<<<< HEAD
 We compare the IOR read-after-write (PPN=48, $rs$=2~MiB) workloads across three DAOS POSIX container access methods on Sys-A, with the Linux page cache disabled.
 
 Plain POSIX access through \textit{dfuse} reads at 3.26~GiB/s and writes at 0.75--0.81~GiB/s, while DFS reads at 74~GiB/s and writes at 107--131~GiB/s, i.e., 23$\times$ or 130$\times$ faster.
 
 The interception library (IL) approach delivers throughput similar to DFS but with much larger variability. Across the iterations of an IL write run, the first iteration is significantly slower than the subsequent ones. We name these iterations write-cold and write-warm accordingly. IOR reports latency per I/O operation. We multiply it by the number of operations to obtain the total data transfer time, and Fig.~\ref{fig:access-cmp} plots the per-iteration wall time decomposed into this transfer time and the remaining metadata time for DFS and IL methods. Metadata time is negligible for reads and write-warm iterations but expands in write-cold iterations: for DFS it adds only 22\% on top of the transfer time, whereas for IL the metadata operations take 2.5$\times$ over the transfer time. Comparing transfer time alone, IL read is 11\% faster than DFS read, while IL write is 2--9\% slower. In the data injection phases of scientific streaming pipelines, where the first/cold write iteration is often the most critical, DFS is therefore preferable to IL.
+=======
+>>>>>>> fcf2965 (Updates from Overleaf)
 
 
 \begin{takeaway}
@@ -128,6 +141,7 @@ The interception library (IL) approach delivers throughput similar to DFS but wi
     \caption{Variation of \textit{fio} read-only throughput.}
     \label{fig:fio-read-boxplot}
 \end{figure}
+
 
 
 Fig.~\ref{fig:fio-all-pattern} shows the 10-run median throughput of \textit{fio} read/write mix workloads ($nj$=$iod$=16) across five I/O request sizes on Sys-B. Write throughput substantially exceeds read throughput. For $rs \geq$1~MiB, write-only saturates at 22.4--22.9~GiB/s whereas read-only plateaus near 4.6~GiB/s, a roughly 5$\times$ asymmetry. The aggregate throughput for each read/write mix scales monotonically with the write fraction, since write performance dominates the total. 
