@@ -16,3 +16,6 @@ main.pdf
 # vscode settings
 .vscode/
 .DS_Store
+
+# AI settings
+.claude/
