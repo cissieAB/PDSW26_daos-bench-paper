@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\caption{Throughput and CPU usage of NFS and DAOS}
+\label{tab:cmp_daos-vs-nfs}
+
+ \renewcommand{\arraystretch}{1.1}
+\begin{tabular}{|l|l|c|c|c|}
+\hline
+File system & Metric & 4 KiB & 1 MiB & 4 MiB \\
+\hline
+NFS (pvsync2) & Throughput (GiB/s) & 0.62 & 0.72 & 0.83 \\
+\cline{2-5}
+              & CPU usage (\%)     & 59.7 & 62.6 & 69.3 \\
+\hline
+DAOS (DFS)    & Throughput (GiB/s) & 0.33 & 10.59 & 10.32\\
+\cline{2-5}
+              & CPU usage (\%)     & 99.5 & 60.7 & 62.8\\
+\hline
+\end{tabular}
+
+\end{table}
