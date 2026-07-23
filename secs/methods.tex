@@ -55,8 +55,5 @@ In addition, we evaluate how object/file size and count affect read throughput a
 
 \subsection{DAOS vs.\ Other Storage Systems}
 
-<<<<<<< HEAD
+
 The client node of Sys-B also has access to an NVMe-based storage node via the Network File System (NFS, v4.2) over TCP/IP on a 100~Gbps ConnectX-6 Dx Ethernet fabric. Comparing DAOS to this NFS quantifies the performance gap between a conventional file-sharing stack and a modern object store with native RDMA transport. To avoid confounding the comparison with the peak-bandwidth difference between the 100~Gbps Ethernet and 200~Gbps InfiniBand fabrics, we restrict the test to a single process, keeping throughput well below the theoretical peak of either fabric.
-=======
-The client node of Sys-B also has access to a remote NVMe-based storage node via the Network File System (NFS, v4.2) over TCP/IP through a 100~Gbps ConnectX-6 Dx Ethernet NIC. Comparing DAOS to this NFS on Sys-B quantifies the performance gap between a conventional file-sharing stack and a modern object store with native RDMA transport. To avoid confounding the comparison with the peak-bandwidth difference between the 100~Gbps Ethernet and 200~Gbps InfiniBand fabrics, we restrict the test to a single \textit{fio} process, keeping throughput well below the limit of either fabric.
->>>>>>> fcf2965 (Updates from Overleaf)

@@ -99,11 +99,6 @@ Although \texttt{ior} read throughput eventually surpasses write throughput, the
 \subsection{DAOS POSIX Container Access Approaches}
 
 
-Fig.~\ref{fig:access-cmp} compares the single-node 10-run median throughput of identical \textit{fio} \texttt{randwrite} ($nj$=$iod$=16) and \texttt{ior} read-after-write (PPN=48, $rs$=2~MiB) workloads across three DAOS container access methods on Sys-A. For \textit{fio} experiments, the POSIX and IL accesses are conducted with the \texttt{pvsync2} engine (it has higher throughput than \texttt{libaio} and \texttt{psync}). Since the \textit{fio} runs fail with \texttt{libpil4dfs}, we fall back to the legacy \texttt{libioil}.
-
-
-POSIX via \textit{dfuse} delivers substantially lower throughput than DFS across all three workloads. For \texttt{ior} write, the throughput gap is as large as 0.8 vs.\ 133.7~GiB/s; \textit{fio} similarly shows 39.3 vs.\ 88.1~GiB/s. The interception library \texttt{libpil4dfs} significantly accelerates \texttt{ior} POSIX access, enabling IL throughput to outperform DFS by 14--30\%, at the cost of a much larger performance range. \texttt{libioil}, however, degrades \textit{fio} throughput to one-third of the POSIX baseline.
-
 \begin{figure}[t]
     \centering
     \includegraphics[width=1\linewidth]{figures/ior_rw_time-nocache.pdf}
@@ -111,15 +106,11 @@ POSIX via \textit{dfuse} delivers substantially lower throughput than DFS across
     \label{fig:access-cmp}
 \end{figure}
 
-<<<<<<< HEAD
 We compare the IOR read-after-write (PPN=48, $rs$=2~MiB) workloads across three DAOS POSIX container access methods on Sys-A, with the Linux page cache disabled.
 
 Plain POSIX access through \textit{dfuse} reads at 3.26~GiB/s and writes at 0.75--0.81~GiB/s, while DFS reads at 74~GiB/s and writes at 107--131~GiB/s, i.e., 23$\times$ or 130$\times$ faster.
 
 The interception library (IL) approach delivers throughput similar to DFS but with much larger variability. Across the iterations of an IL write run, the first iteration is significantly slower than the subsequent ones. We name these iterations write-cold and write-warm accordingly. IOR reports latency per I/O operation. We multiply it by the number of operations to obtain the total data transfer time, and Fig.~\ref{fig:access-cmp} plots the per-iteration wall time decomposed into this transfer time and the remaining metadata time for DFS and IL methods. Metadata time is negligible for reads and write-warm iterations but expands in write-cold iterations: for DFS it adds only 22\% on top of the transfer time, whereas for IL the metadata operations take 2.5$\times$ over the transfer time. Comparing transfer time alone, IL read is 11\% faster than DFS read, while IL write is 2--9\% slower. In the data injection phases of scientific streaming pipelines, where the first/cold write iteration is often the most critical, DFS is therefore preferable to IL.
-=======
->>>>>>> fcf2965 (Updates from Overleaf)
-
 
 \begin{takeaway}
 \textbf{Takeaway:} Plain POSIX access should be accelerated by preloading \texttt{libpil4dfs}, which can even outperform DFS access. However, in write-cold scenarios, DFS is preferable to IL, as it avoids the metadata overhead that dominates the first write iteration.
