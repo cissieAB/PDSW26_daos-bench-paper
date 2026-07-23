@@ -1,8 +1,7 @@
-
 \section{Evaluation Results}
 \label{sec:results}
 
-Throughout our evaluation, unless otherwise stated, both benchmarks use the \texttt{dfs} engine, which bypasses the Linux kernel I/O stack, including the page cache; the \textit{fio} experiments are time-based with a duration of 60 seconds. 
+Throughout our evaluation, unless otherwise stated, we use the \texttt{dfs} engine for both IOR and \textit{fio}, which bypasses the Linux kernel I/O stack, including the page cache. Each configuration is repeated at least 10 times, and we report the median values. We use the coefficient of variation (standard deviation divided by mean, in percentage) to quantify run-to-run variability. 
 
 \subsection{I/O Concurrency}
 
@@ -10,9 +9,7 @@ Throughout our evaluation, unless otherwise stated, both benchmarks use the \tex
 \label{sec:iod-scaling}
 
 
-We run the \textit{fio} \texttt{randwrite} workload on Sys-B. Each configuration is repeated at least 10 times. Run-to-run variability, quantified by the coefficient of variation (standard deviation divided by mean, in percentage), remains within 8\% across all configurations, showing consistent write performance. Fig.~\ref{fig:fio-sweep-bs_iod} shows the median throughput and CPU utilization by queue depth. I/O request size has a greater impact on throughput than queue depth. The two small I/O request sizes (4~KiB and 16~KiB) yield consistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, saturating at $iod{\geq}32$. Large I/O request sizes (1, 2, and 4~MiB) yield bandwidth that rises sharply from $iod{=}4$ to $iod{=}8$ and plateaus at 16--21~GiB/s for $iod{\geq}16$, roughly an order of magnitude above the small-block regime. At $iod{=}64$, the median IOPS is 176~K for $rs{=}4$~KiB and 18~K for $rs{=}1$~MiB, so the 4~KiB configuration sustains nearly 10$\times$ the request rate yet delivers 26$\times$ lower throughput. The CPU utilization clearly indicates that on Sys-B, $rs$=4/16~KiB is CPU-constrained, as it consistently occupies 100\% CPU across all queue depths. 
-
-
+We run the \textit{fio} \texttt{randwrite} workload on Sys-B. Run-to-run variability remains within 8\% across all configurations, showing consistent write performance. Fig.~\ref{fig:fio-sweep-bs_iod} shows the median throughput and CPU utilization by queue depth. I/O request size has a greater impact on throughput than queue depth. The two small I/O request sizes (4~KiB and 16~KiB) yield consistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, saturating at $iod{\geq}32$. Large I/O request sizes (1, 2, and 4~MiB) yield bandwidth that rises sharply from $iod{=}4$ to $iod{=}8$ and plateaus at 16--21~GiB/s for $iod{\geq}16$, roughly an order of magnitude above the small-block regime. At $iod{=}64$, the median IOPS is 176~K for $rs{=}4$~KiB and 18~K for $rs{=}1$~MiB, so the 4~KiB configuration sustains nearly 10$\times$ the request rate yet delivers 26$\times$ lower throughput. The CPU utilization clearly indicates that on Sys-B, $rs$=4/16~KiB is CPU-constrained, as it consistently occupies 100\% CPU across all queue depths. 
 
 
 
@@ -91,7 +88,7 @@ Although \texttt{ior} read throughput eventually surpasses write throughput, the
 
 
 \begin{takeaway}
-\textbf{Takeaway:} DAOS scales to multi-TiB/s with tens of client nodes on Sys-A, and larger I/O request sizes saturate at lower process concurrency. Write throughput is supposed to exceed read throughput for hundreds of processes, and the crossover requires very high concurrency.
+\textbf{Takeaway:} DAOS scales to multi-TiB/s with tens of client nodes on Sys-A, and larger I/O request sizes saturate at lower process concurrency. Write throughput is expected to exceed read throughput for hundreds of processes, and the crossover requires very high concurrency.
 \end{takeaway}
 
 
@@ -99,19 +96,20 @@ Although \texttt{ior} read throughput eventually surpasses write throughput, the
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=1\linewidth]{figures/iorAndfio_engine-cmp.pdf}
-    \caption{Throughput under different DAOS POSIX container access methods.}
+    \includegraphics[width=1\linewidth]{figures/ior_rw_time-nocache.pdf}
+    \caption{Per-iteration wall time and transfer time of the IOR workloads under DFS and interception library (IL) access.}
     \label{fig:access-cmp}
 \end{figure}
 
-Fig.~\ref{fig:access-cmp} compares the single-node 10-run median throughput of identical \textit{fio} \texttt{randwrite} ($nj$=$iod$=16) and \texttt{ior} read-after-write (PPN=48, $rs$=2~MiB) workloads across three DAOS container access methods on Sys-A. For \textit{fio} experiments, the POSIX and IL accesses are conducted with the \texttt{pvsync2} engine (it has higher throughput than \texttt{libaio} and \texttt{psync}). Since the \textit{fio} runs fail with \texttt{libpil4dfs}, we fall back to the legacy \texttt{libioil}.
+We compare the IOR read-after-write (PPN=48, $rs$=2~MiB) workloads across three DAOS POSIX container access methods on Sys-A, with the Linux page cache disabled.
 
+Plain POSIX access through \textit{dfuse} reads at 3.26~GiB/s and writes at 0.75--0.81~GiB/s, while DFS reads at 74~GiB/s and writes at 107--131~GiB/s, i.e., 23$\times$ or 130$\times$ faster.
 
-POSIX via \textit{dfuse} delivers substantially lower throughput than DFS across all three workloads. For \texttt{ior} write, the throughput gap is as large as 0.8 vs.\ 133.7~GiB/s; \textit{fio} similarly shows 39.3 vs.\ 88.1~GiB/s. The interception library \texttt{libpil4dfs} significantly accelerates \texttt{ior} POSIX access, enabling IL throughput to outperform DFS by 14--30\%, at the cost of a much larger performance range. \texttt{libioil}, however, degrades \textit{fio} throughput to one-third of the POSIX baseline.
+The interception library (IL) approach delivers throughput similar to DFS but with much larger variability. Across the iterations of an IL write run, the first iteration is significantly slower than the subsequent ones. We name these iterations write-cold and write-warm accordingly. IOR reports latency per I/O operation. We multiply it by the number of operations to obtain the total data transfer time, and Fig.~\ref{fig:access-cmp} plots the per-iteration wall time decomposed into this transfer time and the remaining metadata time for DFS and IL methods. Metadata time is negligible for reads and write-warm iterations but expands in write-cold iterations: for DFS it adds only 22\% on top of the transfer time, whereas for IL the metadata operations take 2.5$\times$ over the transfer time. Comparing transfer time alone, IL read is 11\% faster than DFS read, while IL write is 2--9\% slower. In the data injection phases of scientific streaming pipelines, where the first/cold write iteration is often the most critical, DFS is therefore preferable to IL.
 
 
 \begin{takeaway}
-\textbf{Takeaway:} Bare POSIX access via \textit{dfuse} should be avoided when performance is critical. Preloading \texttt{libpil4dfs} can significantly boost throughput beyond bare POSIX access. Native DFS access provides the most balanced performance.
+\textbf{Takeaway:} Plain POSIX access should be accelerated by preloading \texttt{libpil4dfs}, which can even outperform DFS access. However, in write-cold scenarios, DFS is preferable to IL, as it avoids the metadata overhead that dominates the first write iteration.
 \end{takeaway}
 
 
@@ -136,7 +134,6 @@ Fig.~\ref{fig:fio-all-pattern} shows the 10-run median throughput of \textit{fio
 
 
 When $rs\geq$ 2~MiB, sequential and random access converge to within 7\% for all the mixes, indicating that I/O requests at coarse granularity are insensitive to access order. At small I/O request sizes, by contrast, throughput depends heavily on access order. At $rs$=4~KiB, read-related throughput under sequential access is 2--6$\times$ that of random, despite sequential write-only throughput being only 53\% of random. At $rs$=16~KiB, write-only throughput shows a 73\% gap between random and sequential access, while the other mixes stay within 18\%. Overall, small I/O size is consistently order-sensitive, and the direction varies by operation: reads favor sequential access, and writes favor random. 
-
 
 Read-only workloads also exhibit the largest run-to-run variability among the five mixes. Except for random read at $rs$=4~KiB, all other read-only tasks show 11--20\% variation. Fig.~\ref{fig:fio-read-boxplot} shows the bandwidth distribution for both access patterns, where the boxes indicate the 25th/75th percentiles and the whiskers denote the min and max, highlighting that the slowest runs can drop to half of the median.
 Per-run traces reveal two distinct sources of this variability. At $rs$=4~KiB, sequential read shows a classic warm-up ramp, with the first two runs 33\% and 17\% below steady state. At $rs\geq$1~MiB, the low outliers are instead episodic: dips to roughly half the median recur in a few runs, while writes in the same runs remain flat. We infer that background aggregation of the rewritten working set competes with reads for NVMe bandwidth, but leave it for future investigation.
@@ -178,7 +175,7 @@ Small-object read throughput is generally lower and depends heavily on the numbe
 
 We copy a 28~GiB file from the NFS-mounted volume to a DAOS POSIX container and use single-process \textit{fio} to measure the sequential-read throughput under two scenarios: (1) DAOS with the \texttt{dfs} engine ($iod$=32); and (2) NFS with the \texttt{pvsync2} engine. For both scenarios, \textit{fio} terminates as soon as it completes a single full read of the file. Fig.~\ref{fig:daos-vs-nfs} reports the throughput and CPU usage across both scenarios, where each bar is the median of 10 runs, and individual runs are overlaid as dots on the throughput bars.
 
-NFS bandwidth is largely insensitive to \textit{fio} I/O request size. It varies only slightly from 0.62 to 0.83~GiB/s across the three tested $rs$, with tightly clustered runs. DAOS, by contrast, delivers a median of 10.3--10.6~GiB/s at $rs\geq$1~MiB, over 10$\times$ higher than NFS, but collapses to 0.33~GiB/s at $rs$=4~KiB, almost half of NFS's throughput. The per-run dots further reveal that DAOS throughput at $rs\geq$1~MiB is bimodal: 3 of the 10 runs form a ``cold'' cluster with a median of 2.9~GiB/s, while the remaining 7 ``warm'' runs reach 10.9 and 10.4~GiB/s at $rs$=1 and 4~MiB, respectively, a 3.5--3.7$\times$ gap. As with throughput, NFS's CPU usage stays within a narrow range (59.7--69.3\%). DAOS's CPU usage spikes to 99.5\% at $rs$=4~KiB, compared to 60.7--62.8\% at larger $rs$, clearly indicating a CPU-bound scenario at small $rs$.
+NFS bandwidth is largely insensitive to \textit{fio} I/O request size. It varies only slightly from 0.62 to 0.83~GiB/s across the three tested $rs$. DAOS, by contrast, delivers a median of 10.3--10.6~GiB/s at $rs\geq$1~MiB, over 10$\times$ higher than NFS, but collapses to 0.33~GiB/s at $rs$=4~KiB, roughly half of NFS's throughput. The per-run dots further reveal that DAOS throughput at $rs\geq$1~MiB is bimodal: 3 of the 10 runs form a ``cold'' cluster with a median of 2.9~GiB/s, while the remaining 7 ``warm'' runs reach 10.9 and 10.4~GiB/s at $rs$=1 and 4~MiB, respectively, a 3.5--3.7$\times$ gap. As with throughput, NFS's CPU usage stays within a narrow range (59.7--69.3\%). DAOS's CPU usage spikes to 99.5\% at $rs$=4~KiB, compared to 60.7--62.8\% at larger $rs$, clearly indicating a CPU-bound scenario at small $rs$.
 
 \begin{takeaway}
 \textbf{Takeaway:} At or above the 1~MiB I/O request size, DAOS outperforms NFS by an order of magnitude in throughput with lower CPU utilization. At small I/O request sizes, DAOS's IOPS bottleneck saturates the client CPU, and its throughput on Sys-B can even fall below that of NFS.
