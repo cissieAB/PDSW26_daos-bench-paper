@@ -1,26 +1,27 @@
 \section{Evaluation Results}
 \label{sec:results}
 
-Throughout our evaluation, unless otherwise stated, we use the \texttt{dfs} engine for both IOR and \textit{fio}, which bypasses the Linux kernel I/O stack, including the page cache. Each configuration is repeated at least 10 times, and we report the median values. We use the coefficient of variation (standard deviation divided by mean, in percentage) to quantify run-to-run variability. 
+%Throughout our evaluation, unless otherwise stated, we use the \texttt{dfs} engine for both IOR and \textit{fio}, which bypasses the Linux kernel I/O stack, including the page cache. Each configuration is repeated at least 10 times, and we report the median values. We use the coefficient of variation (standard deviation divided by mean, in percentage) to quantify run-to-run variability. 
 
-\subsection{I/O Concurrency}
+%\subsection{I/O Concurrency}
+\subsection{Streaming Throughput}
+\label{sec:rq1_throughput}
 
-\subsubsection{Single-Process I/O Queue Depth Scaling}
+Scientific streaming imposes high concurrent I/O demands and requires throughput to scale across client nodes. We characterize how I/O request size, concurrency, DAOS access method, and client count affect read and write throughput.
+
+\subsubsection{I/O Concurrency}
+%\subsubsection{Single-Process I/O Queue Depth Scaling}
 \label{sec:iod-scaling}
 
-
-We run the \textit{fio} \texttt{randwrite} workload on Sys-B. Run-to-run variability remains within 8\% across all configurations, showing consistent write performance. Fig.~\ref{fig:fio-sweep-bs_iod} shows the median throughput and CPU utilization by queue depth. I/O request size has a greater impact on throughput than queue depth. The two small I/O request sizes (4~KiB and 16~KiB) yield consistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, saturating at $iod{\geq}32$. Large I/O request sizes (1, 2, and 4~MiB) yield bandwidth that rises sharply from $iod{=}4$ to $iod{=}8$ and plateaus at 16--21~GiB/s for $iod{\geq}16$, roughly an order of magnitude above the small-block regime. At $iod{=}64$, the median IOPS is 176~K for $rs{=}4$~KiB and 18~K for $rs{=}1$~MiB, so the 4~KiB configuration sustains nearly 10$\times$ the request rate yet delivers 26$\times$ lower throughput. The CPU utilization clearly indicates that on Sys-B, $rs$=4/16~KiB is CPU-constrained, as it consistently occupies 100\% CPU across all queue depths. 
-
+We first study intra-node I/O concurrency on Sys-B using the \textit{fio} randwrite workload. We first fix $nj{=}1$ and vary $iod$ from 4 to 256 across $rs{=}$4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB. We then fix $iod{=}16$ and vary $nj$ from 4 to 64 across the same request sizes. Fig.~\ref{fig:fio-iod-nj} shows the resulting throughput and CPU utilization.
 
 
-\subsubsection{Single-Node Process Count Scaling}
-
-\begin{figure}[t]
+\begin{figure}[!htbp]
     \centering
     \begin{subfigure}{0.48\linewidth}
         \centering
         \includegraphics[width=1\linewidth]{figures/fio-randwrite_bs-iod-sweep.pdf}
-        \vspace{-1.5em}
+        \vspace{-1em}
         \caption{I/O queue depth scaling.}
         \label{fig:fio-sweep-bs_iod}
     \end{subfigure}
@@ -28,7 +29,7 @@ We run the \textit{fio} \texttt{randwrite} workload on Sys-B. Run-to-run variabi
     \begin{subfigure}{0.48\linewidth}
         \centering
         \includegraphics[width=1\linewidth]{figures/fio-randwrite_bs-nj-sweep.pdf}
-        \vspace{-1.5em}
+        \vspace{-1em}
         \caption{Process count scaling.}
         \label{fig:fio-sweep-bs_nj}
     \end{subfigure}
@@ -38,149 +39,229 @@ We run the \textit{fio} \texttt{randwrite} workload on Sys-B. Run-to-run variabi
 \end{figure}
 
 
+Fig.~\ref{fig:fio-sweep-bs_iod} shows the single-process results as $iod$ varies. The coefficient of variation remains below 8\% across all configurations. I/O request size has a greater impact on throughput than queue depth. The two small request sizes (4~KiB and 16~KiB) yield consistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, and saturate at $iod{\geq}32$. In contrast, the 1, 2, and 4~MiB requests increase sharply from $iod{=}4$ to $iod{=}8$ and plateau at 16--21~GiB/s for $iod{\geq}16$, roughly an order of magnitude above the small-request regime. At $iod{=}64$, the median IOPS is 176~K for $rs{=}4$~KiB and 18~K for $rs{=}1$~MiB, so the 4~KiB configuration sustains nearly 10$\times$ the request rate while delivering 26$\times$ lower throughput. CPU utilization remains near 100\% for $rs{=}$4/16~KiB across all queue depths, indicating that small-request performance is CPU-bound.
 
-We then fix $iod{=}16$ and sweep the number of \textit{fio} jobs ($nj$). Multiple \textit{fio} jobs/processes are configured to write to one large DAOS object. Run-to-run variability remains within 12\% across all configurations. As Fig.~\ref{fig:fio-sweep-bs_nj} shows, the large I/O request sizes (1/2/4~MiB) are already near-peak at $nj{=}4$, delivering 22.5--22.7~GiB/s (over 95\% of the NIC limit), and remain flat across all $nj$ values, with a slight decline to 21.2--21.5~GiB/s at $nj{\geq}32$. This indicates that for Sys-B, DAOS throughput is client-side NIC-bound: 4--16 processes with $iod{=}16$ saturate the NIC, and additional processes offer no further benefit. In contrast, small I/O request sizes continue to scale with $nj$, saturating at $nj{\geq}16$ with median bandwidth peaking at 6.9~GiB/s and 16.7~GiB/s for 4~KiB and 16~KiB, respectively, 7$\times$ higher than the single-process values in Fig.~\ref{fig:fio-sweep-bs_iod}.
+We next fix $iod{=}16$ and vary the number of \textit{fio} jobs, as shown in Fig.~\ref{fig:fio-sweep-bs_nj}. Multiple jobs write to one large DAOS object, and throughput has a coefficient of variation below 11\% across all configurations. The 1/2/4~MiB requests are already near peak throughput at $nj{=}4$, reaching 22.5--22.7~GiB/s, over 95\% of the client NIC limit. Their throughput remains nearly flat as $nj$ increases, with a slight decrease to 21.2--21.5~GiB/s at $nj{\geq}32$, indicating that additional process concurrency provides little benefit once the client NIC is saturated. In contrast, the two small request sizes continue to benefit from additional processes and saturate at $nj{\geq}16$, reaching 6.9~GiB/s and 16.7~GiB/s for 4~KiB and 16~KiB, respectively, approximately 7$\times$ higher than their single-process throughput.
 
-According to the DAOS user guide~\cite{daos-user-guide}, the chunk size refers to the largest I/O size that a DAOS client sends to a storage target in a single request. Therefore, for $rs$=2/4~MiB, each I/O operation is broken into several 1~MiB (chunk size on Sys-B) requests, whereas for $rs$=4/16~KiB, more I/O requests are issued while bandwidth remains underutilized. This explains why $rs$ has a greater impact than queue or process concurrency.
-
+The two results consistently show that I/O request size has a larger impact on throughput than either queue depth or process count. The DAOS chunk size is the largest I/O size that a client sends to a storage target in a single request~\cite{daos-user-guide}. On Sys-B, the chunk size is 1~MiB. Therefore, 2/4~MiB \textit{fio} operations are divided into multiple 1~MiB DAOS requests, whereas 4/16~KiB operations issue much smaller requests and require substantially higher request rates to utilize the available bandwidth. As a result, MiB-scale requests reach the client NIC limit with modest concurrency, while small requests require both deeper queues and additional processes to improve throughput.
 
 \begin{takeaway}
-\textbf{Takeaway:} I/O request size dominates DAOS throughput. Request sizes that are multiples of the DAOS POSIX container chunk size quickly saturate bandwidth. Scaling both process and queue depth is essential to improve throughput for small I/O request sizes. 
+\textbf{Takeaway:} I/O request size dominates DAOS throughput. MiB-scale requests reach the client NIC bandwidth with modest concurrency, while small requests remain CPU- and IOPS-bound and require higher queue and process concurrency to improve throughput.
 \end{takeaway}
 
+%We run the \textit{fio} \texttt{randwrite} workload on Sys-B. Run-to-run variability remains within 8\% across all configurations, showing consistent write performance. Fig.~\ref{fig:fio-sweep-bs_iod} shows the median throughput and CPU utilization by queue depth. I/O request size has a greater impact on throughput than queue depth. The two small I/O request sizes (4~KiB and 16~KiB) yield consistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, saturating at $iod{\geq}32$. Large I/O request sizes (1, 2, and 4~MiB) yield bandwidth that rises sharply from $iod{=}4$ to $iod{=}8$ and plateaus at 16--21~GiB/s for $iod{\geq}16$, roughly an order of magnitude above the small-block regime. At $iod{=}64$, the median IOPS is 176~K for $rs{=}4$~KiB and 18~K for $rs{=}1$~MiB, so the 4~KiB configuration sustains nearly 10$\times$ the request rate yet delivers 26$\times$ lower throughput. The CPU utilization clearly indicates that on Sys-B, $rs$=4/16~KiB is CPU-constrained, as it consistently occupies 100\% CPU across all queue depths. 
 
-\subsubsection{Tail Latency at Fixed Concurrency}
 
-\begin{figure}[t]
+
+
+
+%We then fix $iod{=}16$ and sweep the number of \textit{fio} jobs ($nj$). Multiple \textit{fio} jobs/processes are configured to write to one large DAOS object. Run-to-run variability remains within 12\% across all configurations. As Fig.~\ref{fig:fio-sweep-bs_nj} shows, the large I/O request sizes (1/2/4~MiB) are already near-peak at $nj{=}4$, delivering 22.5--22.7~GiB/s (over 95\% of the NIC limit), and remain flat across all $nj$ values, with a slight decline to 21.2--21.5~GiB/s at $nj{\geq}32$. This indicates that for Sys-B, DAOS throughput is client-side NIC-bound: 4--16 processes with $iod{=}16$ saturate the NIC, and additional processes offer no further benefit. In contrast, small I/O request sizes continue to scale with $nj$, saturating at $nj{\geq}16$ with median bandwidth peaking at 6.9~GiB/s and 16.7~GiB/s for 4~KiB and 16~KiB, respectively, 7$\times$ higher than the single-process values in Fig.~\ref{fig:fio-sweep-bs_iod}.
+
+%According to the DAOS user guide~\cite{daos-user-guide}, the chunk size refers to the largest I/O size that a DAOS client sends to a storage target in a single request. Therefore, for $rs$=2/4~MiB, each I/O operation is broken into several 1~MiB (chunk size on Sys-B) requests, whereas for $rs$=4/16~KiB, more I/O requests are issued while bandwidth remains underutilized. This explains why $rs$ has a greater impact than queue or process concurrency.
+
+
+%\begin{takeaway}
+%\textbf{Takeaway:} I/O request size dominates DAOS throughput. Request sizes that are multiples of the DAOS POSIX container chunk size quickly saturate bandwidth. Scaling both process and queue depth is essential to improve throughput for small I/O request sizes. 
+%\end{takeaway}
+
+
+
+%\subsection{DAOS POSIX Container Access Approaches}
+\subsubsection{DAOS Client Access Methods}
+
+We next compare three DAOS client access methods on Sys-A using the IOR read-after-write workload with PPN\,=\,48 and $rs{=}2$~MiB: plain POSIX access through \textit{dfuse}, the interception library (IL), and the native DFS interface. The Linux page cache is disabled for all three methods. Plain POSIX access achieves 3.26~GiB/s for reads and 0.75--0.81~GiB/s across write iterations, while DFS achieves 74~GiB/s for reads and 107--131~GiB/s across write iterations, corresponding to 23$\times$ and up to 130$\times$ higher throughput, respectively. Since DFS and IL achieve much higher throughput than plain POSIX access, Fig.~\ref{fig:access-cmp} compares their per-iteration behavior in more detail.
+
+%%%We evaluate the impact of DAOS client access methods on I/O performance. Plain POSIX access achieves 3.26~GiB/s for reads and 0.75--0.81~GiB/s for writes, while DFS achieves 74~GiB/s for reads and 107--131~GiB/s for writes, corresponding to 23$\times$ and up to 130$\times$ higher throughput, respectively. Fig.~\ref{fig:access-cmp} compares DFS and IL at the per-iteration level to examine their performance difference.
+
+\begin{figure}[!htbp]
     \centering
-    \includegraphics[width=1\linewidth]{figures/fio-tail_latency_breakdown.pdf}
-    \caption{Tail latency breakdown of \textit{fio} \texttt{randwrite}.}
-    \label{fig:fio-tail-latency-breakdown}
+    \includegraphics[width=1\linewidth]{figures/ior_rw_time-nocache.pdf}
+\caption{Per-iteration IOR wall time for DFS and IL, decomposed into data-transfer and non-transfer time (PPN\,=\,48, $rs{=}2$~MiB). Error bars show the min--max range across runs.}   \label{fig:access-cmp}
 \end{figure}
 
-We evaluate five $nj/iod$ combinations on Sys-B with their product fixed at 256 and $rs$=1~MiB. Every \textit{fio} process writes to an individual object. Across all configurations, the mean latency (10.8--11.1~ms) remains consistent, while maximum latency varies from 144 to 165~ms. 
 
-In \textit{fio} reports, latency is further broken down into submission latency ($slat$, reported as minimum, mean, and maximum) and completion latency ($clat$, reported as percentiles P1--P99.99). Fig.~\ref{fig:fio-tail-latency-breakdown} shows the mean and maximum $slat$ alongside the P50 and P99.99 $clat$ for all five configurations. The mean $slat$ is consistently low at 0.03--0.06~ms across all configurations. When the per-job queue depth is small (e.g., 4 or 8), the maximum $slat$ spikes to over 1000$\times$ the mean, reaching as high as 45.6--67.9~ms. Completion latency dominates the overall I/O latency. The P50 $clat$ increases slightly as $nj$ grows, while the P99.99 $clat$ decreases. At $nj{=}4$ ($iod{=}64$), P99.99 $clat$ reaches 143.7~ms, approximately 26$\times$ the P50. These results demonstrate that tail latency is strongly sensitive to the $nj/iod$ split, even when total I/O concurrency and mean throughput remain comparable. To minimize tail latency without incurring excessive submission overhead, a configuration with more jobs and a shallow-to-moderate per-job queue depth is preferable.
+IL achieves throughput comparable to DFS but shows substantially higher variability during writes. In particular, the first write iteration is consistently slower than subsequent iterations, which we refer to as write-cold and write-warm, respectively. Fig.~\ref{fig:access-cmp} decomposes the per-iteration wall time into data-transfer time and the remaining non-transfer time. We obtain the data-transfer time from the per-operation latency reported by IOR and the number of I/O operations, and compute the non-transfer time as the difference between the total iteration wall time and the data-transfer time. Thus, the non-transfer component represents residual time not accounted for by data transfer and may include metadata processing, synchronization, and other runtime overhead. The non-transfer component is negligible for reads and write-warm iterations for both methods. For write-cold, however, the non-transfer time is 22\% of the DFS transfer time, while for IL it is 2.5$\times$ the transfer time. Considering data transfer alone, IL reads are 11\% faster than DFS reads, while IL writes are 2--9\% slower.
 
-
-
+These results show that both DFS and IL avoid the large overhead of plain \textit{dfuse} access. Their estimated data-transfer times are comparable, but IL has a much larger non-transfer component during the cold write, resulting in less consistent write performance.
 
 \begin{takeaway}
-\textbf{Takeaway:} At fixed total concurrency, tail latency is highly sensitive to the $nj/iod$ split. More processes with shallower per-process queues reduce tail latency at the cost of higher submission overhead.
+\textbf{Takeaway:} Plain POSIX access through \textit{dfuse} incurs substantial throughput overhead. Both DFS and the interception library provide much higher throughput, but IL incurs a large non-transfer cost during the cold write and therefore shows less consistent write performance than DFS.
 \end{takeaway}
 
 
-\subsubsection{Multi-Node Scaling}
+
+
+%We compare the IOR read-after-write (PPN=48, $rs$=2~MiB) workloads across three DAOS POSIX container access methods on Sys-A, with the Linux page cache disabled.
+
+%Plain POSIX access through \textit{dfuse} reads at 3.26~GiB/s and writes at 0.75--0.81~GiB/s, while DFS reads at 74~GiB/s and writes at 107--131~GiB/s, i.e., 23$\times$ or 130$\times$ faster.
+
+%The interception library (IL) approach delivers throughput similar to DFS but with much larger variability. Across the iterations of an IL write run, the first iteration is significantly slower than the subsequent ones. We name these iterations write-cold and write-warm accordingly. IOR reports latency per I/O operation. We multiply it by the number of operations to obtain the total data transfer time, and Fig.~\ref{fig:access-cmp} plots the per-iteration wall time decomposed into this transfer time and the remaining metadata time for DFS and IL methods. Metadata time is negligible for reads and write-warm iterations but expands in write-cold iterations: for DFS it adds only 22\% on top of the transfer time, whereas for IL the metadata operations take 2.5$\times$ over the transfer time. Comparing transfer time alone, IL read is 11\% faster than DFS read, while IL write is 2--9\% slower. In the data injection phases of scientific streaming pipelines, where the first/cold write iteration is often the most critical, DFS is therefore preferable to IL.
+
+%\begin{takeaway}
+%\textbf{Takeaway:} Plain POSIX access should be accelerated by preloading the interception library \texttt{libpil4dfs}, which can even outperform DFS access. However, in write-cold scenarios, DFS is preferable to IL, as it avoids the metadata overhead that dominates the first write iteration.
+%\end{takeaway}
+
+
+
+\subsubsection{Client-Node Scaling}
+%\subsubsection{Multi-Node Scaling}
 \label{sec:multinode}
 
-\begin{figure}[t]
+We further evaluate throughput scaling across DAOS client nodes on Sys-A using IOR read-after-write workloads. To characterize the upper throughput limit, we set the DAOS POSIX container redundancy factor (\texttt{rd\_fac}) to 0 instead of its default value of 3. Following~\cite{DAOS-aurora-20-node-test2024scw}, we bind MPI processes to CPU cores using the breadth-skip method. We evaluate PPN\,=\,8, 16, 32, and 48 with $rs{=}2$ and 16~MiB, while the \texttt{dfs} chunk size is 2~MiB. Throughput has a coefficient of variation below 11\% for all configrations. Fig.~\ref{fig:ior-scaling} shows client-node scaling at PPN\,=\,48 (left) and PPN scaling at $n{=}128$ client nodes (right).
+
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=1\linewidth]{figures/ior-scaling.pdf}
-    \caption{IOR median read-after-write bandwidth: node-count scaling at PPN\,=\,48 (left) and PPN scaling at $n{=}128$ (right).}
+    \caption{IOR median read-after-write bandwidth: client-node scaling with 48 MPI processes per node (PPN\,=\,48) (left) and PPN scaling at $n{=}128$ client nodes (right).}
     \label{fig:ior-scaling}
 \end{figure}
 
+As shown in the left panel, DAOS throughput scales near-linearly with the number of client nodes before saturation, and the 16~MiB request size consistently outperforms the 2~MiB request size. For $rs{=}16$~MiB, median write and read bandwidths increase from 169.2 and 108.7~GiB/s at one client node to 1971.1 and 1824.5~GiB/s at 16 client nodes, and further to 5371.6 and 5507.1~GiB/s at 128 client nodes. The aggregate NIC bandwidth of the 126 active DAOS storage nodes is 5867.3~GiB/s, and the measured throughput at 128 client nodes exceeds 90\% of this value, indicating that throughput is limited by the storage-side network at this scale.
 
-We evaluate \texttt{ior} read-after-write workloads on Sys-A. Despite DAOS POSIX containers on Sys-A defaulting to a redundancy factor (\texttt{rd\_fac}) of 3, we set it to 0 to maximize bandwidth, as our goal is finding the upper limit of a streaming workflow. Following \cite{DAOS-aurora-20-node-test2024scw}, we bind MPI processes to CPU cores using the breadth-skip method.
-
-We examine PPN\,=\,8,\,16,\,32,\,48 and $rs$ of 2/16~MiB, with the \texttt{dfs} chunk size set to 2~MiB. Although the runs are submitted as many separate HPC jobs and thus execute on different sets of nodes ($n\geq64$), run-to-run throughput variability remains within 11\% for all workloads.
-
-Across the full sweep, all eight tested node counts achieve higher throughput at $rs{=}$16~MiB than at $rs{=}$2~MiB, and fourteen of the sixteen $n$--$rs$ combinations reach peak throughput at PPN\,=\,48, with the remaining two peaking at PPN\,=\,32. Fig.~\ref{fig:ior-scaling} reports the 10-iteration median bandwidth along two slices of the sweep: node-count ($n$) scaling at PPN\,=\,48 (left) and PPN scaling at $n{=}128$ (right). DAOS scales near-linearly with the number of nodes before saturation. At a single node, median write and read bandwidths at $rs{=}$16~MiB are 169.2~GiB/s (over 90\% of the compute-node NIC limit) and 108.7~GiB/s, respectively; at $n{=}16$, these scale to 1971.1 and 1824.5~GiB/s, and at $n{=}128$, to 5371.6 and 5507.1~GiB/s. The aggregate NIC bandwidth of the 126 active storage nodes is 5867.3~GiB/s, and the measured 128-client throughput exceeds 90\% of this limit, indicating that the saturation is server-side NIC-bound. The PPN sweep at $n{=}128$ further shows that the larger request size demands less process concurrency: $rs{=}$16~MiB already delivers over 80\% of its PPN\,=\,48 bandwidth at PPN\,=\,8, and is nearly flat beyond PPN\,=\,32, whereas $rs{=}$2~MiB keeps scaling with PPN, with read growing 3.5$\times$ from PPN\,=\,8 to 48. 
-
-Although \texttt{ior} read throughput eventually surpasses write throughput, the crossover requires a large process count: at $rs{=}16$~MiB, read overtakes write at 1024 MPI processes, whereas at $rs{=}2$~MiB it occurs only at the largest configuration (PPN\,=\,48, $n{=}128$, 6144 MPI processes). With hundreds of processes, typical of scientific streaming workloads, write bandwidth is therefore expected to exceed read bandwidth.
-
-
-
+The right panel shows that larger I/O requests require less process concurrency to approach peak throughput. For $rs{=}16$~MiB, PPN\,=\,8 already achieves more than 80\% of the PPN\,=\,48 bandwidth, and throughput is nearly flat beyond PPN\,=\,32. In contrast, the 2~MiB workload continues to benefit from increasing PPN, with read throughput increasing by 3.5$\times$ from PPN\,=\,8 to 48. Read throughput eventually exceeds write throughput, but only at high process counts: the crossover occurs at 1024 MPI processes for $rs{=}16$~MiB and at 6144 MPI processes for $rs{=}2$~MiB.
 
 \begin{takeaway}
-\textbf{Takeaway:} DAOS scales to multi-TiB/s with tens of client nodes on Sys-A, and larger I/O request sizes saturate at lower process concurrency. Write throughput is expected to exceed read throughput for hundreds of processes, and the crossover requires very high concurrency.
+\textbf{Takeaway:} DAOS scales to multi-TiB/s with tens of client nodes on Sys-A, and larger I/O request sizes saturate at lower process concurrency. Write throughput exceeds read throughput at moderate process counts, while the crossover occurs only at very high concurrency.
 \end{takeaway}
 
 
-\subsection{DAOS POSIX Container Access Approaches}
+%We evaluate \texttt{ior} read-after-write workloads on Sys-A. Despite DAOS POSIX containers on Sys-A defaulting to a redundancy factor (\texttt{rd\_fac}) of 3, we set it to 0 to maximize bandwidth, as our goal is finding the upper limit of a streaming workflow. Following \cite{DAOS-aurora-20-node-test2024scw}, we bind MPI processes to CPU cores using the breadth-skip method.
+
+%We examine PPN\,=\,8,\,16,\,32,\,48 and $rs$ of 2/16~MiB, with the \texttt{dfs} chunk size set to 2~MiB. Although the runs are submitted as many separate HPC jobs and thus execute on different sets of nodes ($n\geq64$), run-to-run throughput variability remains within 11\% for all workloads.
+
+%Across the full sweep, all eight tested node counts achieve higher throughput at $rs{=}$16~MiB than at $rs{=}$2~MiB, and fourteen of the sixteen $n$--$rs$ combinations reach peak throughput at PPN\,=\,48, with the remaining two peaking at PPN\,=\,32. Fig.~\ref{fig:ior-scaling} reports the 10-iteration median bandwidth along two slices of the sweep: node-count ($n$) scaling at PPN\,=\,48 (left) and PPN scaling at $n{=}128$ (right). DAOS scales near-linearly with the number of nodes before saturation. At a single node, median write and read bandwidths at $rs{=}$16~MiB are 169.2~GiB/s (over 90\% of the compute-node NIC limit) and 108.7~GiB/s, respectively; at $n{=}16$, these scale to 1971.1 and 1824.5~GiB/s, and at $n{=}128$, to 5371.6 and 5507.1~GiB/s. The aggregate NIC bandwidth of the 126 active storage nodes is 5867.3~GiB/s, and the measured 128-client throughput exceeds 90\% of this limit, indicating that the saturation is server-side NIC-bound. The PPN sweep at $n{=}128$ further shows that the larger request size demands less process concurrency: $rs{=}$16~MiB already delivers over 80\% of its PPN\,=\,48 bandwidth at PPN\,=\,8, and is nearly flat beyond PPN\,=\,32, whereas $rs{=}$2~MiB keeps scaling with PPN, with read growing 3.5$\times$ from PPN\,=\,8 to 48. 
+
+%Although \texttt{ior} read throughput eventually surpasses write throughput, the crossover requires a large process count: at $rs{=}16$~MiB, read overtakes write at 1024 MPI processes, whereas at $rs{=}2$~MiB it occurs only at the largest configuration (PPN\,=\,48, $n{=}128$, 6144 MPI processes). With hundreds of processes, typical of scientific streaming workloads, write bandwidth is therefore expected to exceed read bandwidth.
 
 
-\begin{figure}[t]
+
+
+%\begin{takeaway}
+%\textbf{Takeaway:} DAOS scales to multi-TiB/s with tens of client nodes on Sys-A, and larger I/O request sizes saturate at lower process concurrency. Write throughput is expected to exceed read throughput for hundreds of processes, and the crossover requires very high concurrency.
+%\end{takeaway}
+
+
+\subsection{Concurrency and Tail Latency}
+\label{sec:rq2_latency}
+
+High throughput alone is insufficient for scientific streaming, where an individual slow write can introduce backpressure into the pipeline. We therefore examine whether tail latency depends only on the total I/O concurrency or also on how that concurrency is distributed between processes and per-process queues. On Sys-B, we evaluate five $nj/iod$ configurations with $nj\times iod$ fixed at 256 and $rs{=}1$~MiB, with each \textit{fio} process writing to a separate object. Across all configurations, the mean latency remains nearly unchanged at 10.8--11.1~ms, while throughput remains comparable. Fig.~\ref{fig:fio-tail-latency-breakdown} shows how the latency distribution changes despite the same total concurrency.
+
+%\subsubsection{Tail Latency at Fixed Concurrency}
+
+\begin{figure}[!htbp]
     \centering
-    \includegraphics[width=1\linewidth]{figures/ior_rw_time-nocache.pdf}
-    \caption{Per-iteration wall time and transfer time of the IOR workloads under DFS and interception library (IL) access.}
-    \label{fig:access-cmp}
+    \includegraphics[width=1\linewidth]{figures/fio-tail_latency_breakdown.pdf}
+    \caption{Latency breakdown of \textit{fio} \texttt{randwrite} at fixed total I/O concurrency ($nj\times iod{=}256$, $rs{=}1$~MiB).}
+    \label{fig:fio-tail-latency-breakdown}
 \end{figure}
 
-We compare the IOR read-after-write (PPN=48, $rs$=2~MiB) workloads across three DAOS POSIX container access methods on Sys-A, with the Linux page cache disabled.
+%We evaluate five $nj/iod$ combinations on Sys-B with their product fixed at 256 and $rs$=1~MiB. Every \textit{fio} process writes to an individual object. Across all configurations, the mean latency (10.8--11.1~ms) remains consistent, while maximum latency varies from 144 to 165~ms. 
 
-Plain POSIX access through \textit{dfuse} reads at 3.26~GiB/s and writes at 0.75--0.81~GiB/s, while DFS reads at 74~GiB/s and writes at 107--131~GiB/s, i.e., 23$\times$ or 130$\times$ faster.
+\textit{fio} separates I/O latency into submission latency ($slat$) and completion latency ($clat$). Mean $slat$ remains negligible at 0.03--0.06~ms across all configurations, and completion latency dominates the overall I/O latency. As shown in Fig.~\ref{fig:fio-tail-latency-breakdown}, the P50 $clat$ changes only moderately across configurations, whereas P99.99 is highly sensitive to the process/queue-depth configuration. With $nj{=}4$ and $iod{=}64$, P99.99 $clat$ reaches 143.7~ms, approximately 26$\times$ the P50. Increasing the process count while reducing the per-process queue depth lowers P99.99 $clat$ to approximately 75~ms, despite the fixed total concurrency and comparable throughput.
 
-The interception library (IL) approach delivers throughput similar to DFS but with much larger variability. Across the iterations of an IL write run, the first iteration is significantly slower than the subsequent ones. We name these iterations write-cold and write-warm accordingly. IOR reports latency per I/O operation. We multiply it by the number of operations to obtain the total data transfer time, and Fig.~\ref{fig:access-cmp} plots the per-iteration wall time decomposed into this transfer time and the remaining metadata time for DFS and IL methods. Metadata time is negligible for reads and write-warm iterations but expands in write-cold iterations: for DFS it adds only 22\% on top of the transfer time, whereas for IL the metadata operations take 2.5$\times$ over the transfer time. Comparing transfer time alone, IL read is 11\% faster than DFS read, while IL write is 2--9\% slower. In the data injection phases of scientific streaming pipelines, where the first/cold write iteration is often the most critical, DFS is therefore preferable to IL.
+Shallower queues, however, increase worst-case submission latency. At $iod{=}8$ and 4, the maximum $slat$ reaches 45.6 and 67.9~ms, respectively, more than 1000$\times$ the mean $slat$. These results reveal a tradeoff within the same total concurrency: deeper per-process queues increase completion tail latency, whereas very shallow queues can incur large submission-latency spikes. For latency-sensitive streaming, using more processes with a shallow-to-moderate queue depth provides a better balance.
 
 \begin{takeaway}
-\textbf{Takeaway:} Plain POSIX access should be accelerated by preloading the interception library \texttt{libpil4dfs}, which can even outperform DFS access. However, in write-cold scenarios, DFS is preferable to IL, as it avoids the metadata overhead that dominates the first write iteration.
+%\textbf{Takeaway:} At fixed total concurrency, tail latency is highly sensitive to the $nj/iod$ split. More processes with shallower per-process queues reduce tail latency at the cost of higher submission overhead.
+\textbf{Takeaway:} Total I/O concurrency alone does not determine tail latency. At the same $nj\times iod$, using more processes with shallower queues substantially reduces P99.99 completion latency while maintaining comparable throughput, although very shallow queues increase worst-case submission latency.
 \end{takeaway}
 
 
-\subsection{Read/Write Patterns}
 
 
-\begin{figure}[t]
+
+
+
+
+
+\subsection{Data Access Performance}
+\label{sec:rq3_us}
+
+Scientific streaming workflows span write-dominated data production, mixed read/write analysis, and read-dominated post-processing. We next examine how request size and access order affect these read/write patterns, and how storing data as many small objects affects later read performance.
+
+\subsubsection{Read/Write Patterns}
+
+We first evaluate five read/write mixes on Sys-B using \textit{fio} with $nj{=}iod{=}16$: read-only, read-heavy (20\% write), balanced (50\% write), write-heavy (80\% write), and write-only. Each mix is tested under both random and sequential access with $rs{=}$4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB. Fig.~\ref{fig:fio-all-pattern} shows the 10-run median throughput. Write throughput substantially exceeds read throughput. For $rs{\geq}1$~MiB, write-only throughput saturates at 22.4--22.9~GiB/s, whereas read-only throughput plateaus near 4.6~GiB/s, making write-only throughput approximately five times the read-only throughput. Consequently, aggregate throughput increases monotonically with the write fraction across the five read/write mixes.
+
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=1\linewidth]{figures/fio-bw-all-pattern-nj16-iod16.pdf}
     \caption{Throughput for different \textit{fio} read/write mixes.}
     \label{fig:fio-all-pattern}
-    \vspace{0.5em}
+\end{figure}
 
+The effect of access order depends strongly on I/O request size. When $rs{\geq}2$~MiB, sequential and random throughput differ by less than 7\% for all read/write mixes, indicating that coarse-grained I/O is largely insensitive to access order. At smaller request sizes, however, access order has a substantial effect. At $rs{=}4$~KiB, read-related throughput under sequential access is 2--6$\times$ higher than under random access, while sequential write-only throughput is only 53\% of random write throughput. At $rs{=}16$~KiB, random and sequential write-only throughput differ by 73\%, while the other read/write mixes remain within 18\%. Thus, small I/O requests are sensitive to access order, with sequential access favoring reads and random access favoring writes.
+
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=1\linewidth]{figures/fio-read-boxplot.pdf}
+    \vspace{-1.5em}
     \caption{Variation of \textit{fio} read-only throughput.}
     \label{fig:fio-read-boxplot}
 \end{figure}
 
+Read-only workloads also show greater throughput variability than the other read/write mixes. As shown in Fig.~\ref{fig:fio-read-boxplot}, except for 4~KiB random reads, the coefficient of variation is 11--20\% across the read-only configurations, and the slowest runs can fall to roughly half of the median throughput. At $rs{=}4$~KiB, sequential reads show an initial warm-up effect, with the first two runs 33\% and 17\% below steady state. At $rs{\geq}1$~MiB, the low-throughput outliers instead occur episodically. We leave the underlying cause of this variability for future investigation.
 
 
-Fig.~\ref{fig:fio-all-pattern} shows the 10-run median throughput of \textit{fio} read/write mix workloads ($nj$=$iod$=16) across five I/O request sizes on Sys-B. Write throughput substantially exceeds read throughput. For $rs \geq$1~MiB, write-only saturates at 22.4--22.9~GiB/s whereas read-only plateaus near 4.6~GiB/s, a roughly 5$\times$ asymmetry. The aggregate throughput for each read/write mix scales monotonically with the write fraction, since write performance dominates the total. 
+%Fig.~\ref{fig:fio-all-pattern} shows the 10-run median throughput of \textit{fio} read/write mix workloads ($nj$=$iod$=16) across five I/O request sizes on Sys-B. Write throughput substantially exceeds read throughput. For $rs \geq$1~MiB, write-only saturates at 22.4--22.9~GiB/s whereas read-only plateaus near 4.6~GiB/s, a roughly 5$\times$ asymmetry. The aggregate throughput for each read/write mix scales monotonically with the write fraction, since write performance dominates the total. 
 
 
-When $rs\geq$ 2~MiB, sequential and random access converge to within 7\% for all the mixes, indicating that I/O requests at coarse granularity are insensitive to access order. At small I/O request sizes, by contrast, throughput depends heavily on access order. At $rs$=4~KiB, read-related throughput under sequential access is 2--6$\times$ that of random, despite sequential write-only throughput being only 53\% of random. At $rs$=16~KiB, write-only throughput shows a 73\% gap between random and sequential access, while the other mixes stay within 18\%. Overall, small I/O size is consistently order-sensitive, and the direction varies by operation: reads favor sequential access, and writes favor random. 
+%When $rs\geq$ 2~MiB, sequential and random access converge to within 7\% for all the mixes, indicating that I/O requests at coarse granularity are insensitive to access order. At small I/O request sizes, by contrast, throughput depends heavily on access order. At $rs$=4~KiB, read-related throughput under sequential access is 2--6$\times$ that of random, despite sequential write-only throughput being only 53\% of random. At $rs$=16~KiB, write-only throughput shows a 73\% gap between random and sequential access, while the other mixes stay within 18\%. Overall, small I/O size is consistently order-sensitive, and the direction varies by operation: reads favor sequential access, and writes favor random. 
 
-Read-only workloads also exhibit the largest run-to-run variability among the five mixes. Except for random read at $rs$=4~KiB, all other read-only tasks show 11--20\% variation. Fig.~\ref{fig:fio-read-boxplot} shows the throughput distribution for both access patterns, where the boxes indicate the 25th/75th percentiles and the whiskers denote the min and max, highlighting that the slowest runs can drop to half of the median.
-Per-run traces reveal two distinct sources of this variability. At $rs$=4~KiB, sequential read shows a classic warm-up ramp, with the first two runs 33\% and 17\% below steady state. At $rs\geq$1~MiB, the low outliers are instead episodic: dips to roughly half the median recur in a few runs, while writes in the same runs remain flat. We infer that background aggregation of the rewritten working set competes with reads for NVMe bandwidth, but leave it for future investigation.
+%Read-only workloads also exhibit the largest run-to-run variability among the five mixes. Except for random read at $rs$=4~KiB, all other read-only tasks show 11--20\% variation. Fig.~\ref{fig:fio-read-boxplot} shows the throughput distribution for both access patterns, where the boxes indicate the 25th/75th percentiles and the whiskers denote the min and max, highlighting that the slowest runs can drop to half of the median.
+%Per-run traces reveal two distinct sources of this variability. At $rs$=4~KiB, sequential read shows a classic warm-up ramp, with the first two runs 33\% and 17\% below steady state. At $rs\geq$1~MiB, the low outliers are instead episodic: dips to roughly half the median recur in a few runs, while writes in the same runs remain flat. We infer that background aggregation of the rewritten working set competes with reads for NVMe bandwidth, but leave it for future investigation.
 
 
 \begin{takeaway}
 \textbf{Takeaway:} Access order matters only at small I/O request sizes, where sequential access favors reads, and random access favors writes. Read-only throughput is markedly less consistent than that of write-dominated mixes.
 \end{takeaway}
 
+\subsubsection{Object Granularity}
 
-\begin{figure}[t]
+We examine how object size and count affect read throughput at scale on Sys-A. We create two 1~TiB DAOS containers, using 16~GiB objects in one container and 4~MiB objects in the other. For the large-object configuration, each MPI rank reads one 16~GiB object; for the small-object configurations, each rank reads 1024, 2048, or 4096 4~MiB objects. We launch \textit{fio} processes with MPI and use $rs{=}2$~MiB, matching the Sys-A chunk size. Throughput is measured as the total data volume divided by wall time, defined from the earliest read-start timestamp to the latest read-completion timestamp across all processes. Because the first iteration consistently has lower throughput than subsequent iterations, we report the first-iteration (cold-read) results. Fig.~\ref{fig:cold-read-large-vs-small} shows the resulting throughput as the number of client nodes increases.
+
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=1\linewidth]{figures/mpi-fio-read-bar.pdf}
-    \caption{The effect of object size on (cold) read throughput.}
+    \vspace{-0.5em}
+   \caption{Effect of object size and count on cold-read throughput.}
     \label{fig:cold-read-large-vs-small}
     
-    \vspace{-1em}
+    %\vspace{-1em}
 \end{figure}
 
 
-Fig.~\ref{fig:cold-read-large-vs-small} shows the read throughput for 1~TiB containers populated with either 16~GiB or 4~MiB objects on Sys-A, using MPI-launched \textit{fio} processes. Throughput is measured as data volume divided by wall time (the latest read-completion timestamp minus the earliest read-start timestamp across all processes), with the I/O request size fixed at 2~MiB, the same as the Sys-A chunk size. Within a single run, throughput is lower on the first iteration and higher on later (warm) ones, and we report only the first-iteration (cold) values.
+%Fig.~\ref{fig:cold-read-large-vs-small} shows the read throughput for 1~TiB containers populated with either 16~GiB or 4~MiB objects on Sys-A, using MPI-launched \textit{fio} processes. Throughput is measured as data volume divided by wall time (the latest read-completion timestamp minus the earliest read-start timestamp across all processes), with the I/O request size fixed at 2~MiB, the same as the Sys-A chunk size. Within a single run, throughput is lower on the first iteration and higher on later (warm) ones, and we report only the first-iteration (cold) values.
 
-The baseline 16~GiB/rank large-object read scales near-linearly with node count, from 73~GiB/s at 2 nodes to 457~GiB/s at 16 nodes, showing that distributing objects across more DAOS clients effectively leverages the available bandwidth.
-Small-object read throughput is generally lower and depends heavily on the number of objects held per rank. At 4096 objects/rank (16~GiB/rank, matching the 16~GiB-object baseline), throughput reaches only 89~GiB/s at 8 nodes and 91~GiB/s at 16 nodes, a 3--5$\times$ gap versus the large-object baseline at the same node counts. At 2 nodes, 1024 objects/rank (4~GiB/rank) yields 107~GiB/s, 1.47$\times$ the baseline, but at 8 and 16 nodes its throughput falls to 0.7$\times$ the baseline. This shows that the number of objects per rank, not the total data volume per rank, drives the small-object read penalty. This per-object overhead compounds as node count grows, causing small-object throughput to plateau.
+%The baseline 16~GiB/rank large-object read scales near-linearly with node count, from 73~GiB/s at 2 nodes to 457~GiB/s at 16 nodes, showing that distributing objects across more DAOS clients effectively leverages the available bandwidth.
+%Small-object read throughput is generally lower and depends heavily on the number of objects held per rank. At 4096 objects/rank (16~GiB/rank, matching the 16~GiB-object baseline), throughput reaches only 89~GiB/s at 8 nodes and 91~GiB/s at 16 nodes, a 3--5$\times$ gap versus the large-object baseline at the same node counts. At 2 nodes, 1024 objects/rank (4~GiB/rank) yields 107~GiB/s, 1.47$\times$ the baseline, but at 8 and 16 nodes its throughput falls to 0.7$\times$ the baseline. This shows that the number of objects per rank, not the total data volume per rank, drives the small-object read penalty. This per-object overhead compounds as node count grows, causing small-object throughput to plateau.
+
+
+The large-object configuration, with one 16~GiB object per rank, scales nearly linearly with client-node count, from 73~GiB/s at 2 nodes to 457~GiB/s at 16 nodes. In contrast, the small-object configurations scale much more slowly. With 4096 4~MiB objects per rank, which matches the 16~GiB data volume per rank of the large-object configuration, throughput reaches only 89~GiB/s at 8 nodes and 91~GiB/s at 16 nodes, 3--5$\times$ lower than the large-object configuration. Small-object throughput also changes with the number of objects per rank: although 1024 objects per rank reaches 107~GiB/s at 2 nodes, its throughput grows much more slowly than the large-object configuration as the client count increases.
+
+The matched-volume comparison shows that storing the same amount of data as many small objects introduces substantial read overhead. As the number of client nodes increases, this per-object overhead limits small-object scaling and causes throughput to plateau. For scientific streaming systems that produce many small events, aggregating events into fewer, larger DAOS objects can therefore substantially improve later read performance.
+
 
 
 \begin{takeaway}
-\textbf{Takeaway:} When reading the same volume of data, many small objects per rank saturate well below the large-object ceiling due to per-object overhead. Therefore, aggregating small detector events into fewer, larger objects is key to improving read performance.
+\textbf{Takeaway:} Reading many small objects achieves substantially lower throughput than reading large objects at the same data volume, and the gap increases with client-node scale. Aggregating small events into fewer, larger objects can therefore improve read performance.
 \end{takeaway}
 
 
-\subsection{DAOS vs.\ NFS}
+\subsubsection{DAOS vs.\ NFS}
 
+We compare DAOS with NFS to provide a conventional file-system reference for the effect of I/O request size. The Sys-B client accesses DAOS over its 200~Gbps InfiniBand network and an NVMe-based NFS v4.2 storage node over a 100~Gbps Ethernet network. To reduce the influence of this peak-bandwidth difference, we use a single \textit{fio} process so that the measured throughput remains below the network capacity of either system. We copy the same 28~GiB file to an NFS-mounted volume and a DAOS POSIX container and measure sequential-read throughput. DAOS uses the \texttt{dfs} engine with $iod{=}32$, while NFS uses the \texttt{pvsync2} engine, which provides the highest NFS throughput among the tested \textit{fio} engines. Each run reads the file exactly once. The Linux page cache is enabled for the NFS path, while the DAOS \texttt{dfs} path bypasses it. Table~\ref{tab:cmp_daos-vs-nfs} reports the 10-run median throughput and CPU utilization.
 
 \input{tables/cmp_daos-vs-nfs}
 
-We copy a 28~GiB file from the NFS-mounted volume to a DAOS POSIX container and measure single-process \textit{fio} sequential-read throughput in two scenarios: (1) DAOS with the \texttt{dfs} engine ($iod$=32) and (2) NFS with the \texttt{pvsync2} engine, which outperforms both the asynchronous \texttt{libaio} and synchronous \texttt{pvsync} engines. In each run, \textit{fio} reads the file exactly once, with the Linux page cache enabled.
+NFS throughput changes only moderately with I/O request size, increasing from 0.62~GiB/s at 4~KiB to 0.83~GiB/s at 4~MiB, while CPU utilization increases from 59.7\% to 69.3\%. DAOS shows much stronger request-size dependence. At $rs{\geq}1$~MiB, DAOS exceeds 10~GiB/s with 60--63\% CPU utilization, whereas at $rs{=}4$~KiB throughput drops to 0.33~GiB/s and CPU utilization reaches 99.5\%, indicating a CPU-bound small-I/O regime. At the MiB-scale request sizes, DAOS throughput is also bimodal across runs: three cold runs have a median of approximately 2.9~GiB/s, while the seven warm runs reach 10.9 and 10.4~GiB/s at $rs{=}1$ and 4~MiB, respectively.
 
-Table~\ref{tab:cmp_daos-vs-nfs} reports the 10-run median throughput and CPU usage. NFS is largely insensitive to the I/O request size $rs$: throughput rises from 0.62 to 0.83~GiB/s as $rs$ grows from 4~KiB to 4~MiB, with CPU usage from 59.7\% to 69.3\%. DAOS, by contrast, exceeds 10~GiB/s at $rs\geq$1~MiB but collapses to 0.33~GiB/s at $rs$=4~KiB, half of NFS, and its 99.5\% CPU usage indicates a CPU-bound scenario. Per-run DAOS results at $rs\geq$1~MiB are bimodal: three ``cold" runs cluster around a 2.9~GiB/s median, while the seven warm runs reach 10.9 and 10.4~GiB/s at $rs$=1 and 4~MiB, respectively.
+
+
+
+%Table~\ref{tab:cmp_daos-vs-nfs} reports the 10-run median throughput and CPU usage. NFS is largely insensitive to the I/O request size $rs$: throughput rises from 0.62 to 0.83~GiB/s as $rs$ grows from 4~KiB to 4~MiB, with CPU usage from 59.7\% to 69.3\%. DAOS, by contrast, exceeds 10~GiB/s at $rs\geq$1~MiB but collapses to 0.33~GiB/s at $rs$=4~KiB, half of NFS, and its 99.5\% CPU usage indicates a CPU-bound scenario. Per-run DAOS results at $rs\geq$1~MiB are bimodal: three ``cold" runs cluster around a 2.9~GiB/s median, while the seven warm runs reach 10.9 and 10.4~GiB/s at $rs$=1 and 4~MiB, respectively.
 
 \begin{takeaway}
-\textbf{Takeaway:} At I/O request sizes of 1~MiB and above, DAOS outperforms NFS by an order of magnitude in throughput with lower CPU usage. At small request sizes, DAOS's IOPS bottleneck can drop its throughput below even NFS's.
+\textbf{Takeaway:} At I/O request sizes of 1~MiB and above, DAOS outperforms NFS by an order of magnitude in throughput with lower CPU utilization. At 4~KiB, DAOS becomes CPU-bound and delivers lower throughput than NFS.
 \end{takeaway}
 

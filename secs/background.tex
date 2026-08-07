@@ -4,41 +4,49 @@
 
 \subsection{DAOS Architecture}
 
-\begin{figure}[t]
+DAOS is a distributed object-storage system designed for high-performance computing environments~\cite{daos-exascale-storage2016sc,daos-dram-intro2023,daos-intro2020}. As illustrated in Fig.~\ref{fig:daos-arch}, a DAOS deployment consists of client nodes and storage nodes connected through an RDMA-capable network. Each storage node runs one or more DAOS storage engines that manage local storage resources and service requests from remote clients. The first storage tier can be configured with either persistent memory or DRAM, while NVMe devices provide capacity for bulk data.
+
+
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=1\linewidth]{figures/daos_arch_SCW.pdf}
     %\caption{DAOS architecture overview. PMem and DRAM are mutually exclusive.}
-    \caption{DAOS architecture and application access paths. POSIX applications access a DFS container through \texttt{dfuse} or \texttt{libpil4dfs}, while DFS-aware applications invoke \texttt{libdfs} directly. The first storage tier uses either PMem or DRAM, with NVMe providing bulk storage.}
+        \caption{DAOS architecture and application access paths. POSIX applications access a DFS container through \textit{dfuse} or \texttt{libpil4dfs}, while DFS-aware applications invoke \texttt{libdfs} directly. The first storage tier uses either PMem or DRAM, with NVMe providing bulk storage.}
+
     \label{fig:daos-arch}
 \end{figure}
 
 
 
+DAOS organizes storage into three hierarchical abstractions: pools, containers, and objects. A pool is a storage reservation spanning one or more storage engines and is the only abstraction directly tied to physical capacity. A container belongs to a pool and provides a logical namespace for a collection of objects. Containers can expose different data models, including POSIX, HDF5~\cite{hdf5-daos2022tpds}, and Python through \texttt{pydaos}. POSIX containers use the DAOS File System (DFS) layout to provide file and directory abstractions over DAOS objects. Two POSIX-container properties used later in this study are the redundancy factor (\texttt{rd\_fac}) and DFS chunk size. The redundancy factor specifies the number of storage-engine failures that the container is configured to tolerate, while the DFS chunk size is the largest I/O request that a DFS client sends to a storage target in a single request~\cite{daos-user-guide}.
 
-DAOS is a distributed object-storage system designed for high-performance computing environments~\cite{daos-exascale-storage2016sc,daos-dram-intro2023,daos-intro2020}. As illustrated in Fig.~\ref{fig:daos-arch}, a DAOS deployment consists of client nodes and storage nodes connected through an RDMA-capable network. Each storage node runs one or more DAOS storage engines that manage local storage resources and service requests from remote clients. The first storage tier can be configured with either persistent memory or DRAM, while NVMe devices provide capacity for bulk data.
+The client side of Fig.~\ref{fig:daos-arch} shows three access paths to a POSIX container. \texttt{dfuse} exposes the container as a mountable filesystem through Linux FUSE. The interception library \texttt{libpil4dfs} redirects supported POSIX operations to \texttt{libdfs}, bypassing the FUSE path, while DFS-aware applications can invoke \texttt{libdfs} directly.
 
 
-%Lofstead et al. prototyped the initial DAOS design as a next-generation HPC I/O stack by replacing POSIX file and directory abstractions with a distributed, object-based model featuring containers, versioned objects, and epoch-based consistency mechanisms \cite{daos-exascale-storage2016sc}.
+% Lofstead et al. prototyped the initial DAOS design as a next-generation HPC I/O stack by replacing POSIX file and directory abstractions with a distributed, object-based model featuring containers, versioned objects, and epoch-based consistency mechanisms \cite{daos-exascale-storage2016sc}.
 %Liang et al.\ presented a full description of the DAOS system built on top of persistent memory (PMem) and NVMe SSDs \cite{daos-intro2020}. Hennecke et al.\ adapted the architecture to replace PMem with DRAM, demonstrating that DRAM maintains competitive performance \cite{daos-dram-intro2023}.
 
-Fig.~\ref{fig:daos-arch} shows the DAOS architecture, which consists of client (compute) nodes and server (storage) nodes. On the client side, the \texttt{libdaos} library exposes the native DAOS API for pools, containers, and objects. \texttt{libdfs} implements a POSIX-like file and directory abstraction over \texttt{libdaos}, and \texttt{dfuse} exposes it as a mountable POSIX filesystem via the Linux FUSE (filesystem in userspace) layer. To avoid FUSE overheads, the interception library \texttt{libpil4dfs} transparently redirects both data and metadata operations on a \texttt{dfuse} mount point to \texttt{libdfs}, bypassing the kernel, while its predecessor \texttt{libioil} intercepts data I/O only. On the server side, each node runs one or more DAOS storage engines that manage two storage tiers: DRAM or PMem for metadata and small I/O, and NVMe SSDs for bulk data. These storage engines distribute objects across tens of storage targets per node. Client-server communication is RDMA-based and traverses high-speed fabrics such as HPE Slingshot or InfiniBand.
-
-DAOS organizes storage into three hierarchical abstractions: pools, containers, and objects.
-A pool is a storage reservation spanning one or more storage engines and is the only abstraction tied to physical capacity. Within a pool, a container serves as a logical namespace that can hold an arbitrary number of objects. DAOS containers support multiple access interfaces, including POSIX, HDF5~\cite{hdf5-daos2022tpds}, and Python (via \texttt{pydaos}), each corresponding to a container type.
-When creating containers, users configure properties such as the container type and redundancy factor. 
+% Fig.~\ref{fig:daos-arch} shows the DAOS architecture, which consists of client (compute) nodes and server (storage) nodes. On the client side, the \texttt{libdaos} library exposes the native DAOS API for pools, containers, and objects. \texttt{libdfs} implements a POSIX-like file and directory abstraction over \texttt{libdaos}, and \texttt{dfuse} exposes it as a mountable POSIX filesystem via the Linux FUSE (filesystem in userspace) layer. To avoid FUSE overheads, the interception library \texttt{libpil4dfs} transparently redirects both data and metadata operations on a \texttt{dfuse} mount point to \texttt{libdfs}, bypassing the kernel, while its predecessor \texttt{libioil} intercepts data I/O only. On the server side, each node runs one or more DAOS storage engines that manage two storage tiers: DRAM or PMem for metadata and small I/O, and NVMe SSDs for bulk data. These storage engines distribute objects across tens of storage targets per node. Client-server communication is RDMA-based and traverses high-speed fabrics such as HPE Slingshot or InfiniBand.
 
 
 
 
-\subsection{DAOS Performance Analysis}
 
 
-\textit{fio} (Flexible I/O Tester)~\cite{fio-github} and IOR~\cite{ior-github, ior-paper2008sc} are two widely used I/O benchmarking tools.
-\textit{fio} targets single-node performance and supports a broad range of I/O engines as well as both sequential and random access patterns. IOR is an MPI-based benchmark suite. Its \texttt{ior} executable measures aggregate bulk I/O throughput across MPI ranks, while \texttt{mdtest} measures metadata operations such as file creation and removal.
+\subsection{Related Work}
 
 
-Both tools have been widely adopted in prior DAOS performance studies. Hennecke et al.\ used IOR to characterize DAOS bandwidth scaling on both the server and client sides \cite{daos-scalability2023SCAsia, daos-dram-intro2023}. Latham et al.\ reported initial performance results on a 20-node Aurora-specification storage system \cite{DAOS-aurora-20-node-test2024scw}. Manubens et al.\ systematically studied DAOS for accelerating numerical weather prediction workflows and compared it against Lustre and Ceph \cite{daos-vs-lustre2022pdsw, hpc-weather2023ipdps, daos-hpc-storage2023cluster, manubens2024reducing}. Logan et al.\ evaluated DAOS with scientific workloads and compared it against OrangeFS and BeeGFS \cite{XianheSun2023evaluation}. 
-In addition to the x86-based DAOS systems, Hennecke et al.\ evaluated DAOS performance using ARM64-based clients \cite{daos-arm2023SCAsia}. Zhu et al.\ offloaded the DAOS client to a BlueField-3 DPU and found that RDMA bandwidth on the DPU matched that of the x86 host \cite{daos-smartnic2025scw}. Collectively, these studies demonstrate DAOS's high I/O performance across diverse platforms and workloads, matching or exceeding established parallel file systems.
+\textit{fio} (Flexible I/O Tester)~\cite{fio-github} and IOR~\cite{ior-github, ior-paper2008sc} are widely used I/O benchmarks and have been adopted extensively in prior DAOS performance studies. Hennecke et al.\ used IOR to characterize DAOS bandwidth scaling on both the server and client sides and evaluated DAOS with both persistent-memory and DRAM first-tier storage~\cite{daos-scalability2023SCAsia, daos-dram-intro2023}. Latham et al.\ reported initial performance results on a 20-node Aurora-specification DAOS system, including aggregate read and write bandwidth across client nodes~\cite{DAOS-aurora-20-node-test2024scw}. Hennecke et al.\ also evaluated DAOS using ARM64 clients~\cite{daos-arm2023SCAsia}, while Zhu et al.\ offloaded the DAOS client to a BlueField-3 DPU and found that its RDMA bandwidth matched that of the x86 host~\cite{daos-smartnic2025scw}.
+
+Existing work has also examined DAOS in scientific application and workflow contexts. Manubens et al.\ studied DAOS for numerical weather prediction, compared its performance with Lustre and Ceph, and investigated its use for reducing I/O contention in large-scale workflows~\cite{daos-vs-lustre2022pdsw, hpc-weather2023ipdps, daos-hpc-storage2023cluster, manubens2024reducing}. Logan et al.\ evaluated DAOS with simulation and deep-learning workloads and compared it with OrangeFS and BeeGFS~\cite{XianheSun2023evaluation}. Other work has explored DAOS integration with scientific I/O and data-management software, including HDF5 and ADIOS~\cite{hdf5-daos2022tpds, daos-adios2024ISC}. Together, these studies establish DAOS as a high-performance storage system across different platforms, access interfaces, and scientific workloads.
+
+Prior studies establish DAOS's high throughput and scalability across platforms and scientific workloads, but largely characterize performance through aggregate bandwidth and application-level results. Our work instead examines how DAOS behaves under the concurrent and latency-sensitive I/O conditions motivated by scientific streaming, jointly considering throughput, tail latency, read/write access behavior, and small-object performance.
+%Both tools have been widely adopted in prior DAOS performance studies. Hennecke et al.\ used IOR to characterize DAOS bandwidth scaling on both the server and client sides \cite{daos-scalability2023SCAsia, daos-dram-intro2023}. Latham et al.\ reported initial performance results on a 20-node Aurora-specification storage system \cite{DAOS-aurora-20-node-test2024scw}. Manubens et al.\ systematically studied DAOS for accelerating numerical weather prediction workflows and compared it against Lustre and Ceph \cite{daos-vs-lustre2022pdsw, hpc-weather2023ipdps, daos-hpc-storage2023cluster, manubens2024reducing}. Logan et al.\ evaluated DAOS with scientific workloads and compared it against OrangeFS and BeeGFS \cite{XianheSun2023evaluation}. 
+%In addition to the x86-based DAOS systems, Hennecke et al.\ evaluated DAOS performance using ARM64-based clients \cite{daos-arm2023SCAsia}. Zhu et al.\ offloaded the DAOS client to a BlueField-3 DPU and found that RDMA bandwidth on the DPU matched that of the x86 host \cite{daos-smartnic2025scw}. Collectively, these studies demonstrate DAOS's high I/O performance across diverse platforms and workloads, matching or exceeding established parallel file systems.
 
 
-We jointly examine concurrency structure (as opposed to magnitude), tail latency, and access-order sensitivity across read/write mixes. Our dual-platform evaluation reveals phenomena common to both deployments, suggesting they are inherent to DAOS itself rather than platform-specific.
+%We jointly examine concurrency structure (as opposed to magnitude), tail latency, and access-order sensitivity across read/write mixes. Our dual-platform evaluation reveals phenomena common to both deployments, suggesting they are inherent to DAOS itself rather than platform-specific.
+
+
+
+

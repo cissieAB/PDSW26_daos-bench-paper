@@ -1,6 +1,7 @@
-\section{Conclusions and Future Work}
+%\section{Conclusions and Future Work}
+\section{Conclusions}
 \label{sec:conclusion}
 
 Overall, across both DAOS deployments, throughput is dominated by request granularity relative to the DAOS chunk size and by access method, with native \texttt{dfs} and interception-library access outperforming bare \textit{dfuse}, while tail latency depends on concurrency structure rather than magnitude. Near-linear multi-TiB/s scaling across tens of client nodes is limited by per-object overhead on small objects, and write throughput exceeds read at streaming-scale process counts. These results argue for aligning request sizes to the DAOS chunk size, aggregating small events into larger objects before ingestion, and tuning concurrency structure, not just magnitude, to the workload's throughput or latency target.
 
-We plan to validate these guidelines on end-to-end streaming pipelines. We are also interested in extending the read workload characterization to machine-learning training workloads that increasingly share DAOS deployments.
+%We plan to validate these guidelines on end-to-end streaming pipelines. We are also interested in extending the read workload characterization to machine-learning training workloads that increasingly share DAOS deployments.

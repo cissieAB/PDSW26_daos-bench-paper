@@ -6,22 +6,37 @@
 \subsection{Experimental Platforms}
 
 
-\subsubsection{Aurora}
-Aurora is Argonne National Laboratory's exascale supercomputer with 10,624 compute nodes \cite{aurora-intro2025}. It currently has the largest DAOS deployment in production, comprising 1,024 storage nodes \cite{aurora-daos-slingshot-rpc2025cug, io500-isc26}. We were allocated a 100~TB DAOS pool under the \texttt{daos\_user} group. Per the Aurora user guide \cite{daos-aurora-guide} and our system queries, this group spans 128\footnote{Only 126 nodes were active during the experiments.} storage nodes, each with 16 PMem devices and two 200~Gbps Slingshot-11 Ethernet NICs.
+%\subsubsection{Aurora}
+%Aurora is Argonne National Laboratory's exascale supercomputer with 10,624 compute nodes \cite{aurora-intro2025}. It currently has the largest DAOS deployment in production, comprising 1,024 storage nodes \cite{aurora-daos-slingshot-rpc2025cug, io500-isc26}. We were allocated a 100~TB DAOS pool under the \texttt{daos\_user} group. Per the Aurora user guide \cite{daos-aurora-guide} and our system queries, this group spans 128\footnote{Only 126 nodes were active during the experiments.} storage nodes, each with 16 PMem devices and two 200~Gbps Slingshot-11 Ethernet NICs.
 
 
 % Aurora deploys a large-scale Dragonfly network topology \cite{aurora-intro2025, daos-aurora-guide}. Its 1,024 DAOS storage nodes span 64 racks organized into 8 Dragonfly groups, while client nodes are distributed across 166 groups. Cross-group traffic traverses multiple network hops, thus partially explaining the bandwidth difference between our results and those of \cite{DAOS-aurora-20-node-test2024scw}, which used identical node specifications but a simpler network topology.
 
 
-\subsubsection{Our Testbed}
-We operate a DAOS testbed comprising 3 storage nodes. Unlike Aurora, this testbed uses DRAM as the first-tier storage and InfiniBand as the interconnect. A single DAOS client node accesses it via a 200~Gbps (23.3~GiB/s) link. The server and client nodes are connected to the same InfiniBand switch, ensuring low-latency RDMA access.
+%\subsubsection{Our Testbed}
+%We operate a DAOS testbed comprising 3 storage nodes. Unlike Aurora, this testbed uses DRAM as the first-tier storage and InfiniBand as the interconnect. A single DAOS client node accesses it via a 200~Gbps (23.3~GiB/s) link. The server and client nodes are connected to the same InfiniBand switch, ensuring low-latency RDMA access.
+
+%\input{tables/platform-spec.tex}
+
+%Table~\ref{tab:platform-cmp} summarizes the key specifications of both systems. For simplicity, we refer to the two platforms as Sys-A and Sys-B in the rest of the paper. Both systems use DAOS v2.6.
+
+\textbf{Aurora.} Aurora is Argonne National Laboratory's exascale supercomputer with 10,624 compute nodes~\cite{aurora-intro2025}. It currently has the largest DAOS deployment in production, comprising 1,024 storage nodes~\cite{aurora-daos-slingshot-rpc2025cug, io500-isc26}. We were allocated a 100~TB DAOS pool under the \texttt{daos\_user} group. According to the Aurora user guide~\cite{daos-aurora-guide} and our system queries, this group spans 128\footnote{Only 126 nodes were active during the experiments.} storage nodes, each with 16 PMem devices and two 200~Gbps Slingshot-11 Ethernet NICs.
+
+\textbf{Our Testbed.} We operate a DAOS testbed comprising three storage nodes. Unlike Aurora, this system uses DRAM as the first-tier storage and InfiniBand as the interconnect. A single DAOS client node accesses the storage nodes through a 200~Gbps (23.3~GiB/s) link. The storage and client nodes are connected to the same InfiniBand switch.
 
 \input{tables/platform-spec.tex}
 
-Table~\ref{tab:platform-cmp} summarizes the key specifications of both systems. For simplicity, we refer to the two platforms as Sys-A and Sys-B in the rest of the paper. Both systems use DAOS v2.6.
+Table~\ref{tab:platform-cmp} summarizes the key specifications of both systems. We refer to Aurora as Sys-A and our testbed as Sys-B in the remainder of the paper. Both systems use DAOS v2.6.
 
-\subsection{DAOS Benchmark Configurations}
+\subsection{Benchmark Methodology}
 
+Unless otherwise stated, we use the \texttt{dfs} engine for both IOR and \textit{fio}, which bypasses the Linux kernel I/O stack, including the page cache. Each configuration is repeated at least 10 times, and we report median values. We use the coefficient of variation, defined as the standard deviation divided by the mean, to quantify measurement variability.
+
+We use \textit{fio} to characterize I/O performance within a single client node and IOR to evaluate throughput across multiple client nodes. In \textit{fio}, the number of jobs ($nj$) specifies the number of parallel processes, while the I/O queue depth ($iod$) specifies the number of I/O requests each process can have in flight. For asynchronous engines such as \texttt{dfs}, $nj\times iod$ determines the total I/O concurrency. Synchronous engines such as \texttt{pvsync2} issue one blocking request at a time regardless of $iod$. We denote the I/O request size as $rs$, corresponding to \textit{fio}'s \texttt{bs} parameter and IOR's transfer size (\texttt{-t}). For multi-node IOR experiments, PPN denotes the number of MPI processes per node.
+
+Across the \textit{fio} experiments, we consider request sizes of 4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB. We vary I/O request size, I/O concurrency, client-node count, read/write mix, sequential and random access, and object size and count. We also compare three methods for accessing DAOS POSIX containers: plain POSIX access through \textit{dfuse}, the DAOS interception library (IL), and the native DFS interface. Finally, we use NFS as a conventional network file system reference for comparison with DAOS.
+\begin{comment}
+    
 \subsubsection{I/O Concurrency}
 
 In a scientific streaming system, multiple data streams are produced and consumed simultaneously, imposing high concurrent I/O demands. We study the intra-node concurrency with \textit{fio}, where a single client node issues multiple parallel I/O requests, and node-level scaling with IOR, where multiple client nodes work simultaneously.
@@ -57,3 +72,4 @@ In addition, we evaluate how object/file size and count affect read throughput a
 
 
 The client node of Sys-B also has access to an NVMe-based storage node via the Network File System (NFS, v4.2) over TCP/IP on a 100~Gbps ConnectX-6 Dx Ethernet fabric. Comparing DAOS to this NFS quantifies the performance gap between a conventional file-sharing stack and a modern object store with native RDMA transport. To avoid confounding the comparison with the peak-bandwidth difference between the 100~Gbps Ethernet and 200~Gbps InfiniBand fabrics, we restrict the test to a single process, keeping throughput well below the theoretical peak of either fabric.
+\end{comment}
