@@ -30,33 +30,34 @@
 
 %%%%%% Author list (camera-ready byline; kept for after double-blind review, currently overridden below)
 \author{
+\IEEEauthorblockN{Xinxin Mei, Mark Jones, Vardan Gyurjyan}
+\IEEEauthorblockA{
+\textit{Department of Data and Computational Science} \\
+\textit{Jefferson Lab}\\
+Newport News, Virginia, USA \\
+\{xmei, maj, gurjyan\}@jlab.org
+% \orcid{0000-0003-1046-5269}
+}
+\and
 \IEEEauthorblockN{Rebecca George$^{*}$\thanks{$^{*}$R. George conducted this work while affiliated with both William \& Mary and Jefferson Lab. She is no longer with either institution.}, Jie Ren}
-
 \IEEEauthorblockA{
 \textit{Department of Computer Science} \\
 \textit{William \& Mary}\\
 Williamsburg, Virginia, USA \\
 \{rcgeorge, jren03\}@wm.edu
 }
-\and
-\IEEEauthorblockN{Mark Jones, Xinxin Mei}
-\IEEEauthorblockA{
-\textit{Department of Data and Computational Science} \\
-\textit{Jefferson Lab}\\
-Newport News, Virginia, USA \\
-\{maj, xmei\}@jlab.org
-% \orcid{0000-0003-1046-5269}
 }
 
-}
+
+% },
 
 % Double-blind PDSW submission: this second \author call overrides the byline above.
-\author{\IEEEauthorblockN{Anonymous Authors}}
+% \author{\IEEEauthorblockN{Anonymous Authors}}
 
 \maketitle
 
 \begin{abstract}
-Distributed Asynchronous Object Storage (DAOS) is a high-performance, RDMA-based parallel storage system that we aim to use as a burst buffer for scientific streaming pipelines. Such pipelines require high concurrent throughput and low tail latency under continuous, line-rate data production. Prior DAOS evaluations primarily emphasize aggregate throughput and scalability, while we additionally examine tail latency, read/write access behavior, and small-object performance. We characterize DAOS across two deployments, including a 128-storage-node allocation on Aurora. We find that I/O request size strongly affects throughput: MiB-scale requests approach client NIC bandwidth with modest concurrency, while small requests remain CPU- and IOPS-bound. DAOS also scales to multi-TiB/s across client nodes. At fixed total I/O concurrency, the process/queue-depth configuration substantially changes P99.99 completion latency while maintaining comparable throughput. Sequential and random throughput largely converge at large request sizes, while reading many small objects incurs substantial overhead at scale. These results provide configuration guidance for latency-sensitive scientific streaming systems.
+Distributed Asynchronous Object Storage (DAOS) is a high-performance, RDMA-based parallel storage system that we aim to use as a burst buffer for scientific streaming pipelines. Such pipelines require high concurrent throughput and low tail latency under continuous, line-rate data production. Prior DAOS evaluations emphasize aggregate throughput and scalability, while we additionally examine tail latency, read/write access behavior, and small-object performance. We characterize DAOS across two deployments, including a 128-storage-node allocation on Aurora. We find that I/O request size strongly affects throughput: MiB-scale requests approach client NIC bandwidth with modest concurrency, while small requests remain CPU- and IOPS-bound. DAOS also scales to multi-TiB/s across client nodes. At fixed total I/O concurrency, the process/queue-depth configuration substantially changes P99.99 completion latency while maintaining comparable throughput. Sequential and random throughput largely converge at large request sizes, while reading many small objects incurs substantial overhead at scale. These results provide configuration guidance for latency-sensitive scientific streaming systems.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -70,17 +71,14 @@ DAOS, distributed storage system, performance benchmarking
 \input{secs/results.tex}
 \input{secs/future.tex}
 
-% \section*{Acknowledgment}
-% We thank the anonymous reviewers for their valuable feedback.
-% %Ilya Baldin, Amitoj Singh, and David Lawrence.
-
-% This research used resources of the Argonne Leadership Computing Facility, which is a U.S. Department of Energy Office of Science User Facility operated under contract DE-AC02-06CH11357. 
-% The Jefferson Lab effort was supported by the Laboratory Directed Research and Development Program at Thomas Jefferson National Accelerator Facility for the U.S. Department of Energy.
-% The William \& Mary effort was supported by NSF OAC-2348350.
+\section*{Acknowledgment}
+We thank the anonymous reviewers for their valuable feedback. This research used resources of the Argonne Leadership Computing Facility, which is a U.S. Department of Energy Office of Science User Facility operated under contract DE-AC02-06CH11357. 
+This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Nuclear Physics under Contract No. 89243126CSC000213. The Jefferson Lab effort was also supported by the Laboratory Directed Research and Development Program at Thomas Jefferson National Accelerator Facility for the U.S. Department of Energy.
+The William \& Mary effort was supported by NSF OAC-2348350.
 
 
 
-\newpage
+% \newpage
 \bibliographystyle{IEEEtran}
 \bibliography{references}
 

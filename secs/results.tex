@@ -13,10 +13,7 @@ Scientific streaming imposes high concurrent I/O demands and requires throughput
 %\subsubsection{Single-Process I/O Queue Depth Scaling}
 \label{sec:iod-scaling}
 
-We first study intra-node I/O concurrency on Sys-B using the \textit{fio} randwrite workload. We first fix $nj{=}1$ and vary $iod$ from 4 to 256 across $rs{=}$4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB. We then fix $iod{=}16$ and vary $nj$ from 4 to 64 across the same request sizes. Fig.~\ref{fig:fio-iod-nj} shows the resulting throughput and CPU utilization.
-
-
-\begin{figure}[!htbp]
+\begin{figure}[thbp]
     \centering
     \begin{subfigure}{0.48\linewidth}
         \centering
@@ -38,6 +35,7 @@ We first study intra-node I/O concurrency on Sys-B using the \textit{fio} randwr
     \label{fig:fio-iod-nj}
 \end{figure}
 
+We first study intra-node I/O concurrency on Sys-B using the \textit{fio} randwrite workload. We first fix $nj{=}1$ and vary $iod$ from 4 to 256 across $rs{=}$4~KiB, 16~KiB, 1~MiB, 2~MiB, and 4~MiB. We then fix $iod{=}16$ and vary $nj$ from 4 to 64 across the same request sizes. Fig.~\ref{fig:fio-iod-nj} shows the resulting throughput and CPU utilization.
 
 Fig.~\ref{fig:fio-sweep-bs_iod} shows the single-process results as $iod$ varies. The coefficient of variation remains below 8\% across all configurations. I/O request size has a greater impact on throughput than queue depth. The two small request sizes (4~KiB and 16~KiB) yield consistently low bandwidth of 0.38--0.70~GiB/s and 1.19--2.30~GiB/s, respectively, and saturate at $iod{\geq}32$. In contrast, the 1, 2, and 4~MiB requests increase sharply from $iod{=}4$ to $iod{=}8$ and plateau at 16--21~GiB/s for $iod{\geq}16$, roughly an order of magnitude above the small-request regime. At $iod{=}64$, the median IOPS is 176~K for $rs{=}4$~KiB and 18~K for $rs{=}1$~MiB, so the 4~KiB configuration sustains nearly 10$\times$ the request rate while delivering 26$\times$ lower throughput. CPU utilization remains near 100\% for $rs{=}$4/16~KiB across all queue depths, indicating that small-request performance is CPU-bound.
 
@@ -227,7 +225,7 @@ We examine how object size and count affect read throughput at scale on Sys-A. W
    \caption{Effect of object size and count on cold-read throughput.}
     \label{fig:cold-read-large-vs-small}
     
-    %\vspace{-1em}
+    \vspace{-1em}
 \end{figure}
 
 
